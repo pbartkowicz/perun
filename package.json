@@ -1,0 +1,22 @@
+{
+  "name": "perun",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pbartkowicz/perun.git"
+  },
+  "scripts": {
+    "lint:app": "eslint src/**/*.js",
+    "lint:test": "eslint test/**/*.js",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "eslint": "^7.24.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.3.5",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
+    "jest": "^26.6.3"
+  }
+}
