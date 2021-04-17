@@ -23,6 +23,15 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Cache node_modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: modules-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            modules-${{ hashFiles('yarn.lock') }}
+            modules-
+
       - name: Install
         run: yarn install --immutable
 
