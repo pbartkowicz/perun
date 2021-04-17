@@ -1,0 +1,43 @@
+name: Lint & Test
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 15.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Using Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Lint App
+        run: yarn lint:app
+
+      - name: Lint Tests
+        run: yarn lint:test
+
+      - name: Test
+        run: yarn test
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        if: ${{ success() }}
+        with:
+          name: Coverage
+          path: ./test/coverage
