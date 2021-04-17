@@ -8,9 +8,18 @@
   "scripts": {
     "lint:app": "eslint src/**/*.js",
     "lint:test": "eslint test/**/*.js",
-    "test": "jest"
+    "test": "jest",
+    "test:run": "node test/test-run.js"
+  },
+  "dependencies": {
+    "rimraf": "^3.0.2",
+    "simple-git": "^2.38.0",
+    "uuid": "^8.3.2",
+    "walk-sync": "^2.2.0"
   },
   "devDependencies": {
+    "boxen": "^5.0.1",
+    "chalk": "^4.1.0",
     "eslint": "^7.24.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
