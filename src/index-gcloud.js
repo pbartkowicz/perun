@@ -3,9 +3,9 @@ const runPerun = require('./index')
 /**
  * Entrypoint for Google Cloud function
  *
- * @param res Response
  * @param req Request
+ * @param res Response
  */
-exports.run = (res, req) => {
-    res.send(runPerun(req))
+exports.run = async (req, res) => {
+    res.send(await runPerun(req))
 }
