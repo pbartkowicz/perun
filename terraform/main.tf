@@ -10,7 +10,7 @@ resource "google_storage_bucket" "bucket" {
 }
 
 resource "google_storage_bucket_object" "archive" {
-  name   = "index.zip"
+  name   = format("%s.zip", filemd5("../build/index.zip"))
   bucket = google_storage_bucket.bucket.name
   source = "../build/index.zip"
 }
