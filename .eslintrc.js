@@ -9,6 +9,9 @@ module.exports = {
         'standard',
         'plugin:jest/recommended'
     ],
+    ignorePatterns: [
+        'sensitive-data.js'
+    ],
     parserOptions: {
         ecmaVersion: 12
     },

@@ -15,18 +15,14 @@ const sensitiveKeywords = require('./sensitive-keywords')
  * Main Perun class
  */
 class Perun {
-    debug = false
-
-    cloneDir = ''
-    foundProblems = []
-
     constructor () {
         // https://cloud.google.com/functions/docs/env-var#newer_runtimes
         this.debug = process.env.FUNCTION_TARGET === undefined
 
         this.cloneDir = path.join(os.tmpdir(), uuid.v4())
+        this.foundProblems = []
     }
-    
+
     async run (req) {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
@@ -101,9 +97,9 @@ class Perun {
             if (contents.includes(keyword)) {
                 this.foundProblems.push({
                     file: file,
-                    line: 1,        // TODO,
+                    line: 1, // TODO
                     problem: {
-                        keyword: keyword,
+                        keyword: keyword
                         // TODO: Some problem description
                     }
                 })
