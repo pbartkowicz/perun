@@ -1,5 +1,6 @@
 const chalk = require('chalk')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 const rimraf = require('rimraf')
 const util = require('util')
@@ -23,7 +24,7 @@ class Perun {
         // https://cloud.google.com/functions/docs/env-var#newer_runtimes
         this.debug = process.env.FUNCTION_TARGET === undefined
 
-        this.cloneDir = path.resolve(__dirname , `../tmp/${uuid.v4()}`)
+        this.cloneDir = path.join(os.tmpdir(), uuid.v4())
     }
     
     async run (req) {
