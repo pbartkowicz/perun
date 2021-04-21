@@ -77,7 +77,7 @@ class Perun {
 
     analyzeFile (file) {
         const extension = path.extname(file)
-        const contents = fs.readFileSync(file)
+        const contents = fs.readFileSync(path.join(this.cloneDir, file))
 
         this.log('cyan', `Analyzing file ${file}.\t\tExtension: ${extension}`)
 
