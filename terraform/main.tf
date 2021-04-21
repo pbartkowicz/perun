@@ -27,3 +27,12 @@ resource "google_cloudfunctions_function" "function" {
   source_archive_bucket = google_storage_bucket.bucket.name
   source_archive_object = google_storage_bucket_object.archive.name
 }
+
+# Role for invoking function
+resource "google_cloudfunctions_function_iam_member" "invoker" {
+  project        = google_cloudfunctions_function.function.project
+  region         = google_cloudfunctions_function.function.region
+  cloud_function = google_cloudfunctions_function.function.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "allUsers"
+}
