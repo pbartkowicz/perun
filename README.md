@@ -12,23 +12,40 @@ TODO
 - [Python](https://www.python.org/) 3.5 <= version <= 3.8
 - [GCloud](https://cloud.google.com/sdk/docs/install)
 
-Enable authorization to the Google Cloud from your local machine
+Enable authorization to the Google Cloud Platform from your local machine and initialize Terraform. This action should be performed only once.
 
 ```sh
-gcloud auth application-default login
+make init
 ```
 
-Initialize terraform
+**Warning:** Do not override Terraform state in the Google Cloud Platform (remote state), override local state instead.
+
+Deploy infrastructure to the Google Cloud Platform. This command creates or updates the infrastructure.
 
 ```sh
-terraform -chdir=./terraform init
+make deploy
 ```
 
-**Warning:** Do not override terraform's state in the Cloud (remote state), override local state instead.
-
-Deploy
+Destroy Cloud Function's function.
 
 ```sh
-zip -r build/index.zip src/ package.json yarn.lock
-terraform -chdir=./terraform apply
+make clean-function
+```
+
+Show actions which will be performed on the infrastructure.
+
+```sh
+make plan
+```
+
+Create a package with the function's source code.
+
+```sh
+make build
+```
+
+Remove `build` directory.
+
+```sh
+make clean
 ```
