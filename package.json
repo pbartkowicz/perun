@@ -5,6 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/pbartkowicz/perun.git"
   },
+  "main": "./src/index-gcloud.js",
   "scripts": {
     "lint:app": "eslint src/**/*.js",
     "lint:test": "eslint test/**/*.js",
