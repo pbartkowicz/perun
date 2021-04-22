@@ -2,7 +2,7 @@ init:
 	gcloud auth application-default login
 	terraform -chdir=./terraform init
 
-build:
+build: clean
 	mkdir build
 	zip -r build/index.zip src/ package.json yarn.lock
 
