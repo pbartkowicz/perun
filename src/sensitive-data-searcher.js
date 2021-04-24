@@ -1,3 +1,4 @@
+const excludedValues = require('./ignore/not-sensitive')
 const sensitiveKeywords = require('./sensitive-keywords')
 
 class SensitiveDataSearcher {
@@ -32,7 +33,7 @@ class SensitiveDataSearcher {
                 line = line.trim()
                 const match = line.match(regex)
 
-                if (match) {
+                if (match && !excludedValues.includes(match[1])) {
                     problems.push({
                         file: file,
                         line: {
