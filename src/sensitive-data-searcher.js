@@ -7,7 +7,7 @@ class SensitiveDataSearcher {
     }
 
     build () {
-        const expectedCharacters = `\w !@#$%^&()\\\/,.;'-_`
+        const expectedCharacters = `\\w !@#$%^&()\\\/,.;\-_`
 
         this.regexes = sensitiveKeywords.map(keyword => {
             return [
