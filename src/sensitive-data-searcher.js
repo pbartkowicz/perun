@@ -36,7 +36,7 @@ class SensitiveDataSearcher {
                     problems.push({
                         file: file,
                         line: {
-                            number: idx,
+                            number: idx + 1,
                             contents: line
                         },
                         type: 'Sensitive data'
