@@ -9,7 +9,8 @@ const walkSync = require('walk-sync')
 
 const exec = util.promisify(require('child_process').exec)
 
-const sensitiveKeywords = require('./sensitive-keywords')
+const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
+const SensitiveDataSearcher = require('./sensitive-data-searcher')
 
 /**
  * Main Perun class
@@ -21,6 +22,8 @@ class Perun {
 
         this.cloneDir = path.join(os.tmpdir(), uuid.v4())
         this.foundProblems = []
+
+        this.searcher = new SensitiveDataSearcher()
     }
 
     async run (req) {
@@ -32,6 +35,7 @@ class Perun {
 
         try {
             if (success) {
+                this.searcher.build()
                 this.process()
             }
         } finally {
@@ -57,10 +61,7 @@ class Perun {
     process () {
         const paths = walkSync(this.cloneDir, {
             directories: false,
-            ignore: [
-                '.git',
-                '.yarn'
-            ]
+            ignore: ignoredFilesAndDirectories
         })
 
         for (const p of paths) {
@@ -75,11 +76,16 @@ class Perun {
         }
     }
 
+    /**
+     * Analyze file
+     *
+     * @param {string} file
+     */
     analyzeFile (file) {
         const extension = path.extname(file)
-        const contents = fs.readFileSync(path.join(this.cloneDir, file))
+        const contents = fs.readFileSync(path.join(this.cloneDir, file)).toString()
 
-        this.log('cyan', `Analyzing file ${file}.\t\tExtension: ${extension}`)
+        this.log('cyan', `Analyzing file ${file}`)
 
         this.lookForSensitiveData(file, extension, contents)
         this.lookForSqlInjection(file, extension, contents)
@@ -90,29 +96,22 @@ class Perun {
      *
      * @param {string} file
      * @param {string} extension
-     * @param {Buffer} contents
+     * @param {string} contents
      */
     lookForSensitiveData (file, extension, contents) {
-        for (const keyword of sensitiveKeywords) {
-            if (contents.includes(keyword)) {
-                this.foundProblems.push({
-                    file: file,
-                    line: 1, // TODO
-                    problem: {
-                        keyword: keyword
-                        // TODO: Some problem description
-                    }
-                })
-            }
+        const result = this.searcher.search(file, contents)
+
+        if (!result.valid) {
+            this.foundProblems = this.foundProblems.concat(result.problems)
         }
     }
 
     /**
      * Look for SQL injection inside file contents
      *
-     * @param {stirng} file
+     * @param {string} file
      * @param {string} extension
-     * @param {Buffer} contents
+     * @param {string} contents
      */
     lookForSqlInjection (file, extension, contents) {
         // TODO: Look for sql injection only in specific filetypes
