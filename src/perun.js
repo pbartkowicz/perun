@@ -9,6 +9,7 @@ const walkSync = require('walk-sync')
 
 const exec = util.promisify(require('child_process').exec)
 
+const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 
 /**
@@ -60,10 +61,7 @@ class Perun {
     process () {
         const paths = walkSync(this.cloneDir, {
             directories: false,
-            ignore: [
-                '.git',
-                '.yarn'
-            ]
+            ignore: ignoredFilesAndDirectories
         })
 
         for (const p of paths) {
