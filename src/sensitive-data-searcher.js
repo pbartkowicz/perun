@@ -7,7 +7,8 @@ class SensitiveDataSearcher {
     }
 
     build () {
-        const expectedCharacters = `\\w !@#$%^&()\\\/,.;\-_`
+        // eslint-disable-next-line no-useless-escape
+        const expectedCharacters = '\\w !@#$%^&()\\\/,.;\-_'
 
         this.regexes = sensitiveKeywords.map(keyword => {
             return [
@@ -16,7 +17,7 @@ class SensitiveDataSearcher {
 
                 // Type of variable after comma - Kotlin/Typescript
                 new RegExp(`${keyword} ?: ?[a-zA-Z0-9_]+ ?= ?["'\`]?([${expectedCharacters}]+)["'\`]?`)
-            ];
+            ]
         }).flat()
     }
 
