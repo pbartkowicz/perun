@@ -18,7 +18,7 @@ const SensitiveDataSearcher = require('./sensitive-data-searcher')
 class Perun {
     constructor () {
         // https://cloud.google.com/functions/docs/env-var#newer_runtimes
-        this.debug = process.env.FUNCTION_TARGET === undefined
+        this.debug = true
 
         this.cloneDir = path.join(os.tmpdir(), uuid.v4())
         this.foundProblems = []
