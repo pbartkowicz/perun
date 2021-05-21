@@ -26,6 +26,7 @@ resource "google_cloudfunctions_function" "function" {
   ingress_settings      = "ALLOW_ALL"
   source_archive_bucket = google_storage_bucket.bucket.name
   source_archive_object = google_storage_bucket_object.archive.name
+  service_account_email = google_service_account.function_sa.email
 }
 
 # Role for invoking function
@@ -35,4 +36,15 @@ resource "google_cloudfunctions_function_iam_member" "invoker" {
   cloud_function = google_cloudfunctions_function.function.name
   role           = "roles/cloudfunctions.invoker"
   member         = "allUsers"
+}
+
+resource "google_service_account" "function_sa" {
+  account_id   = "service-perun-333"
+  display_name = "perun-service-account"
+}
+
+resource "google_project_iam_member" "project" {
+  project = "hopeful-sunset-311310"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.function_sa.email}"
 }
