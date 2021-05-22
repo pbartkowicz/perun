@@ -9,7 +9,7 @@ const walkSync = require('walk-sync')
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
-const accessSecretVersion = require('./secret-gcloud')
+const verifySignature = require('./authenticate')
 
 /**
  * Main Perun class
@@ -25,12 +25,20 @@ class Perun {
         this.searcher = new SensitiveDataSearcher()
     }
 
-    async run (req) {
+    async run (req, res) {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
 
-        const secret = await accessSecretVersion()
-        const repositoryUrl = 'https://github.com/pbartkowicz/perun' // TODO: From request
+        if (!await verifySignature(req)) {
+            res.status(403).send('Unauthorized')
+            return
+        }
+
+        if (!this.verifyAction(req)) {
+            return
+        }
+
+        const repositoryUrl = req.body.repository.html_url
         const success = await this.cloneRepository(repositoryUrl)
 
         try {
@@ -44,7 +52,18 @@ class Perun {
     }
 
     /**
+     * Check if action performed on the repository is one of edited, opened or reopened
+     *
+     * @param  {Request} req
+     * @return {boolean}
+     */
+    verifyAction (req) {
+        return ['edited', 'opened', 'reopened'].includes(req.body.action)
+    }
+
+    /**
      * Clone repository from github
+     *
      * @param {string} repository
      */
     async cloneRepository (repository) {
