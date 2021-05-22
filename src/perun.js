@@ -3,13 +3,11 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const rimraf = require('rimraf')
-const util = require('util')
 const uuid = require('uuid')
 const walkSync = require('walk-sync')
 
-const exec = util.promisify(require('child_process').exec)
-
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
+const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const accessSecretVersion = require('./secret-gcloud')
 

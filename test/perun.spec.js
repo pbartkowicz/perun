@@ -1,4 +1,5 @@
 const chalk = require('chalk')
+const childProcess = require('child_process')
 const rimraf = require('rimraf')
 
 const accessSecretVersion = require('../src/secret-gcloud')
@@ -11,6 +12,11 @@ jest.mock('chalk', () => {
         blue: (msg) => `blue${msg}`,
         red: (msg) => `red${msg}`,
         supportsColor: false
+    }
+})
+jest.mock('child_process', () => {
+    return {
+        exec: () => {}
     }
 })
 jest.mock('os', () => {
@@ -33,11 +39,25 @@ jest.mock('uuid', () => {
         v4: () => 'uuid-v4'
     }
 })
-jest.mock('../src/sensitive-data-searcher')
+jest.mock('../src/promise-exec', () => {
+    return {
+        exec: () => {}
+    }
+})
+jest.mock('../src/secret-gcloud')
 jest.mock('../src/sensitive-data-searcher')
 
 // Tests
 describe('perun', () => {
+    /**
+     * @var {Perun}
+     */
+    let perun
+
+    beforeEach(() => {
+        perun = new Perun()
+    })
+
     it('instantiates', () => {
         expect(() => {
             const perun = new Perun()
@@ -46,9 +66,7 @@ describe('perun', () => {
         }).not.toThrow()
     })
 
-    it('should set default parameters', () => {
-        const perun = new Perun()
-
+    it('should set field values', () => {
         expect(perun.debug).toBe(true)
         expect(perun.cloneDir).toBe('os-tmpdir;uuid-v4')
         expect(perun.foundProblems).toBeInstanceOf(Array)
@@ -61,11 +79,56 @@ describe('perun', () => {
     })
 
     describe('cloneRepository', () => {
+        it('should log, clone repository', async () => {
+            const logSpy = jest.spyOn(perun, 'log')
+                .mockImplementation(() => {})
+            const execSpy = jest.spyOn(childProcess, 'exec')
 
+            await perun.cloneRepository('test')
+
+            expect(logSpy).toBeCalledTimes(1)
+            // TODO: Poprawić
+            // expect(execSpy).toBeCalledTimes(1)
+            // expect(execSpy).toBeCalledWith('test')
+        })
     })
 
     describe('process', () => {
+        let testDir = './test/test-directory/'
 
+        it('should analyze all files and log without problems', () => {
+            const analyzeSpy = jest.spyOn(perun, 'analyzeFile')
+                .mockImplementation(() => {})
+            const logSpy = jest.spyOn(perun, 'log')
+                .mockImplementation(() => {})
+
+            perun.cloneDir = testDir
+            perun.process()
+
+            expect(analyzeSpy).toBeCalledTimes(1)
+            expect(logSpy).toBeCalledTimes(1)
+            expect(logSpy).toBeCalledWith('green', 'No problems found')
+        })
+
+        it('should log all found problems', () => {
+            const analyzeSpy = jest.spyOn(perun, 'analyzeFile')
+                .mockImplementation(() => {
+                    perun.foundProblems.push({})
+                })
+            const logSpy = jest.spyOn(perun, 'log')
+                .mockImplementation(() => {})
+            const logRawSpy = jest.spyOn(perun, 'logRaw')
+                .mockImplementation(() => {})
+
+            perun.cloneDir = testDir
+            perun.process()
+
+            expect(analyzeSpy).toBeCalledTimes(1)
+            expect(logSpy).toBeCalledTimes(1)
+            expect(logSpy).toBeCalledWith('red', 'Found problems: ')
+            expect(logRawSpy).toBeCalledTimes(1)
+            expect(logRawSpy).toBeCalledWith(perun.foundProblems)
+        })
     })
 
     describe('analyzeFile', () => {
@@ -77,13 +140,11 @@ describe('perun', () => {
     })
 
     describe('lookForSqlInjection', () => {
-
+        // TODO
     })
 
     describe('cleanup', () => {
         it('should call log and remove tmp directory', () => {
-            const perun = new Perun()
-
             const logSpy = jest.spyOn(perun, 'log')
                 .mockImplementation(() => {})
             const rimrafSyncSpy = jest.spyOn(rimraf, 'sync')
@@ -101,7 +162,6 @@ describe('perun', () => {
             const spy = jest.spyOn(console, 'log')
                 .mockImplementation(() => {})
 
-            const perun = new Perun()
             perun.debug = true
 
             perun.logRaw('test')
@@ -116,8 +176,6 @@ describe('perun', () => {
 
         it('should not log to console when debug is set to false', () => {
             const spy = jest.spyOn(console, 'log')
-
-            const perun = new Perun()
             perun.debug = false
 
             perun.logRaw('test')
@@ -132,8 +190,6 @@ describe('perun', () => {
     describe('log', () => {
         it('should call logRaw without color when console does not support color', () => {
             chalk.supportsColor = false
-
-            const perun = new Perun()
             perun.debug = true
 
             const spy = jest.spyOn(perun, 'logRaw')
@@ -148,9 +204,8 @@ describe('perun', () => {
         })
 
         it('should call logRaw with color when console supports color', () => {
+            // noinspection JSValidateTypes
             chalk.supportsColor = true
-
-            const perun = new Perun()
             perun.debug = true
 
             const spy = jest.spyOn(perun, 'logRaw')
