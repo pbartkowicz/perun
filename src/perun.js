@@ -106,18 +106,17 @@ class Perun {
 
         this.log('cyan', `Analyzing file ${file}`)
 
-        this.lookForSensitiveData(file, extension, contents)
-        this.lookForSqlInjection(file, extension, contents)
+        this.lookForSensitiveData(file, contents)
+        this.lookForSqlInjection(file, contents)
     }
 
     /**
      * Look for sensitive data inside file contents
      *
      * @param {string} file
-     * @param {string} extension
      * @param {string} contents
      */
-    lookForSensitiveData (file, extension, contents) {
+    lookForSensitiveData (file, contents) {
         const result = this.searcher.search(file, contents)
 
         if (!result.valid) {
@@ -129,10 +128,9 @@ class Perun {
      * Look for SQL injection inside file contents
      *
      * @param {string} file
-     * @param {string} extension
      * @param {string} contents
      */
-    lookForSqlInjection (file, extension, contents) {
+    lookForSqlInjection (file, contents) {
         // TODO: Look for sql injection only in specific filetypes
     }
 

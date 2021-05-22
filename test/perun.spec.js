@@ -66,7 +66,7 @@ describe('perun', () => {
         }).not.toThrow()
     })
 
-    it('should set field values', () => {
+    it('should set default field values', () => {
         expect(perun.debug).toBe(true)
         expect(perun.cloneDir).toBe('os-tmpdir;uuid-v4')
         expect(perun.foundProblems).toBeInstanceOf(Array)
@@ -136,7 +136,66 @@ describe('perun', () => {
     })
 
     describe('lookForSensitiveData', () => {
+        it('should do nothing with foundError if searcher found no problems', () => {
+            const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
+                .mockImplementation(() => {
+                    return {
+                        valid: true
+                    }
+                })
 
+            perun.lookForSensitiveData('file', '')
+
+            expect(searchSpy).toBeCalledTimes(1)
+            expect(searchSpy).toBeCalledWith('file', '')
+            expect(perun.foundProblems).toEqual([])
+        })
+
+        it('should append data if searcher found problems', () => {
+            const problems = [
+                { foo: 'bar' },
+                { bar: 'baz '}
+            ]
+
+            const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
+                .mockImplementation(() => {
+                    return {
+                        valid: false,
+                        problems
+                    }
+                })
+
+            perun.lookForSensitiveData('file', '')
+
+            expect(searchSpy).toBeCalledTimes(1)
+            expect(searchSpy).toBeCalledWith('file', '')
+            expect(perun.foundProblems).toEqual(problems)
+        })
+
+        it('should append problems to existing problems', () => {
+            const oldProblems = [
+                { baz: '123' }
+            ]
+            const problems = [
+                { foo: 'bar' },
+                { bar: 'baz '}
+            ]
+
+            const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
+                .mockImplementation(() => {
+                    return {
+                        valid: false,
+                        problems
+                    }
+                })
+
+            perun.foundProblems = oldProblems
+            perun.lookForSensitiveData('file', '')
+
+            expect(searchSpy).toBeCalledTimes(1)
+            expect(searchSpy).toBeCalledWith('file', '')
+            expect(perun.foundProblems).toEqual([...oldProblems, ...problems])
+        })
     })
 
     describe('lookForSqlInjection', () => {
