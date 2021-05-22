@@ -15,22 +15,21 @@ const createCheckRun = async (req) => {
     const appOctokit = new Octokit({
         authStrategy: createAppAuth,
         auth: {
-            appId: 111722,
+            appId: process.env.APP_ID,
             privateKey: privateKey,
-            clientId: 'Iv1.b873a156f8ab41ef',
+            clientId: process.env.CLIENT_ID,
             clientSecret: secret,
         }
     })
 
     const installation = await appOctokit.request(`GET /repos/${req.body.repository.owner.login}/${req.body.repository.name}/installation`)
-    console.log(`Status code: ${installation.status}`)
+    console.log(`Status code: ${installation.status}`) // Should be 200
     console.log(`Status message: ${installation.data}`)
-    console.log(installation.data.id)
 
     const installationOctokit = new Octokit({
         authStrategy: createAppAuth,
         auth: {
-            appId: 111722,
+            appId: process.env.APP_ID,
             privateKey: privateKey,
             installationId: installation.data.id
         }
@@ -41,7 +40,7 @@ const createCheckRun = async (req) => {
         head_sha: `${req.body.pull_request.head.sha}`,
         status: 'queued',
     })
-    console.log(`Status code: ${resp.status}`)
+    console.log(`Status code: ${resp.status}`) // Should be 201
     console.log(`Status message: ${resp.data}`)
 }
 
