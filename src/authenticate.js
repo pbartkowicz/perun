@@ -1,7 +1,12 @@
 // https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
 // https://humanwhocodes.com/snippets/2020/08/validate-github-webhook-signature-nodejs/
+// https://github.com/octokit/auth-app.js#usage-with-octokit
+// https://github.com/octokit/octokit.js#github-app
 
 const crypto = require('crypto')
+
+const { Octokit } = require("@octokit/core")
+const { createAppAuth } = require("@octokit/auth-app")
 
 const { accessSecretVersion } = require('./secret-gcloud')
 
@@ -21,6 +26,41 @@ const verifySignature = async (req) => {
     return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
 }
 
+const newOctokitApp = async () => {
+    const secret = await accessSecretVersion(process.env.SECRET_PATH)
+    const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
+    
+    return new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+            appId: process.env.APP_ID,
+            privateKey: privateKey,
+            clientId: process.env.CLIENT_ID,
+            clientSecret: secret,
+        }
+    })
+}
+
+const newOctokitInstallation = async (req, octokitApp) => {
+    const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
+    const res = await octokitApp.request(`GET /repos/${req.body.repository.owner.login}/${req.body.repository.name}/installation`)
+    
+    if (res.status !== 200) {
+        throw new Error(`${JSON.stringify(res)}`)
+    }
+
+    return new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+            appId: process.env.APP_ID,
+            privateKey: privateKey,
+            installationId: res.data.id
+        }
+    })
+}
+
 module.exports = {
     verifySignature,
+    newOctokitApp,
+    newOctokitInstallation
 }

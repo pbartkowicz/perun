@@ -9,14 +9,14 @@ const walkSync = require('walk-sync')
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
-const { verifySignature } = require('./authenticate')
-const { createCheckRun } = require('./checks')
+const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
+const { createCheckRun, updateCheckRun } = require('./checks')
 
 /**
  * Main Perun class
  */
 class Perun {
-    constructor () {
+    constructor() {
         // https://cloud.google.com/functions/docs/env-var#newer_runtimes
         this.debug = process.env.FUNCTION_TARGET === undefined
 
@@ -24,9 +24,12 @@ class Perun {
         this.foundProblems = []
 
         this.sensitiveDataSearcher = new SensitiveDataSearcher()
+
+        this.octokitApp = null
+        this.octokitInstallation = null
     }
 
-    async run (req, res) {
+    async run(req, res) {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
 
@@ -39,7 +42,22 @@ class Perun {
             return
         }
 
-        await createCheckRun(req)
+        this.octokitApp = await newOctokitApp()
+        try {
+            this.octokitInstallation = await newOctokitInstallation(req, this.octokitApp)
+        } catch (e) {
+            res.status(500).send(e)
+            return
+        }
+
+        // TODO: Handle checks based on an action passed in request
+        let sensitiveDataCR = null
+        try {
+            sensitiveDataCR = await createCheckRun(req, this.octokitInstallation, 'sensitive-data')
+        } catch (e) {
+            res.status(500).send(e)
+            return
+        }
 
         const repositoryUrl = req.body.repository.html_url
         const success = await this.cloneRepository(repositoryUrl)
@@ -49,8 +67,12 @@ class Perun {
                 this.sensitiveDataSearcher.build()
                 // TODO: sqlSearcher build?
                 this.process()
+                await updateCheckRun(req, this.octokitInstallation, sensitiveDataCR.data.id, 'sensitive-data') // TODO: pass check results
             }
-        } finally {
+        } catch (e) {
+            res.status(500).send(e)
+        }
+        finally {
             this.cleanup()
         }
     }
@@ -61,7 +83,7 @@ class Perun {
      * @param  {Request} req
      * @return {boolean}
      */
-    verifyAction (req) {
+    verifyAction(req) {
         return ['edited', 'opened', 'reopened'].includes(req.body.action)
     }
 
@@ -70,7 +92,7 @@ class Perun {
      *
      * @param {string} repository
      */
-    async cloneRepository (repository) {
+    async cloneRepository(repository) {
         this.log('green', `Cloning: ${repository} to ${this.cloneDir}`)
 
         await exec(`git clone ${repository} ${this.cloneDir}`)
@@ -81,7 +103,7 @@ class Perun {
     /**
      * Process repository
      */
-    process () {
+    process() {
         const paths = walkSync(this.cloneDir, {
             directories: false,
             ignore: ignoredFilesAndDirectories
@@ -104,7 +126,7 @@ class Perun {
      *
      * @param {string} file
      */
-    analyzeFile (file) {
+    analyzeFile(file) {
         const contents = fs.readFileSync(path.join(this.cloneDir, file)).toString()
 
         this.log('cyan', `Analyzing file ${file}`)
@@ -119,7 +141,7 @@ class Perun {
      * @param {string} file
      * @param {string} contents
      */
-    lookForSensitiveData (file, contents) {
+    lookForSensitiveData(file, contents) {
         const result = this.sensitiveDataSearcher.search(file, contents)
 
         if (!result.valid) {
@@ -133,26 +155,26 @@ class Perun {
      * @param {string} file
      * @param {string} contents
      */
-    lookForSqlInjection (file, contents) {
+    lookForSqlInjection(file, contents) {
         // TODO: Look for sql injection only in specific filetypes
     }
 
     /**
      * Cleanup after processing
      */
-    cleanup () {
+    cleanup() {
         this.log('green', `Cleaning up from ${this.cloneDir}`)
 
         rimraf.sync(this.cloneDir)
     }
 
-    logRaw (...messages) {
+    logRaw(...messages) {
         if (this.debug) {
             console.log(...messages)
         }
     }
 
-    log (color = 'blue', ...messages) {
+    log(color = 'blue', ...messages) {
         if (chalk.supportsColor) {
             this.logRaw(chalk[color](...messages))
         } else {
