@@ -3,7 +3,7 @@
 
 const crypto = require('crypto')
 
-const accessSecretVersion = require('./secret-gcloud')
+const { accessSecretVersion } = require('./secret-gcloud')
 
 /**
  * Check if signature is valid

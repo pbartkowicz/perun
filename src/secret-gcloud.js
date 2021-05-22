@@ -23,4 +23,6 @@ const accessSecretVersion = async () => {
     return version.payload.data.toString()
 }
 
-module.exports = accessSecretVersion
+module.exports = {
+    accessSecretVersion
+}
