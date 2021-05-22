@@ -10,6 +10,7 @@ const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const { verifySignature } = require('./authenticate')
+const { createCheckRun } = require('./checks')
 
 /**
  * Main Perun class
@@ -37,6 +38,8 @@ class Perun {
         if (!this.verifyAction(req)) {
             return
         }
+
+        await createCheckRun(req)
 
         const repositoryUrl = req.body.repository.html_url
         const success = await this.cloneRepository(repositoryUrl)
