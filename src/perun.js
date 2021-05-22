@@ -31,14 +31,15 @@ class Perun {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
 
-        const verified = await verifySignature(req)
-        if (!verified) {
+        if (!await verifySignature(req)) {
             res.status(403).send('Unauthorized')
             return
         }
+
         if (!this.verifyAction(req)) {
             return
         }
+
         const repositoryUrl = req.body['repository']['html_url']
         const success = await this.cloneRepository(repositoryUrl)
 
@@ -55,7 +56,7 @@ class Perun {
     /**
      * Check if action performed on the repository is one of edited, opened or reopened
      * 
-     * @param {Request} req
+     * @param  {Request} req
      * @return {boolean}
      */
     verifyAction (req) {

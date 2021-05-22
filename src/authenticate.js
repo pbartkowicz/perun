@@ -8,14 +8,17 @@ const accessSecretVersion = require('./secret-gcloud')
 /**
  * Check if signature is valid
  * 
- * @param {Request} req
- * @returns {boolean}
+ * @param   {Request} req Request
+ * @returns {boolean} Is signature valid
  */
-async function verifySignature(req) {
+const verifySignature = async (req) => {
     const secret = await accessSecretVersion()
-    const expectedSignature = 'sha256=' + crypto.createHmac('sha256', secret).update(JSON.stringify(req.body)).digest('hex')
+    const hmac = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body))
+
+    const expectedSignature = `sha256=${hmac.digest('hex')}`
     const signature = req.headers['x-hub-signature-256']
+
     return signature === expectedSignature
 }
 
-module.exports = verifySignature;
+module.exports = verifySignature

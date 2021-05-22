@@ -7,5 +7,5 @@ const runPerun = require('./index')
  * @param {Response} res
  */
 exports.run = async (req, res) => {
-    res.send(await runPerun(req, res));
+    res.send(await runPerun(req, res))
 }

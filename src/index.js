@@ -8,5 +8,5 @@ const Perun = require('./perun')
  * @param {Response} res
  */
 module.exports = (req, res) => {
-    return (new Perun()).run(req, res);
+    return (new Perun()).run(req, res)
 }
