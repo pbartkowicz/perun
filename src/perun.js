@@ -101,7 +101,6 @@ class Perun {
      * @param {string} file
      */
     analyzeFile (file) {
-        const extension = path.extname(file)
         const contents = fs.readFileSync(path.join(this.cloneDir, file)).toString()
 
         this.log('cyan', `Analyzing file ${file}`)

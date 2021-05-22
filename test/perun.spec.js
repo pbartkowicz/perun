@@ -1,5 +1,6 @@
 const chalk = require('chalk')
 const childProcess = require('child_process')
+const fs = require('fs')
 const rimraf = require('rimraf')
 
 const accessSecretVersion = require('../src/secret-gcloud')
@@ -132,7 +133,27 @@ describe('perun', () => {
     })
 
     describe('analyzeFile', () => {
+        it('should read file contents, log info and pass it to the searchers', () => {
+            const fsSpy = jest.spyOn(fs, 'readFileSync')
+                .mockImplementation(() => 'file-contents')
+            const logSpy = jest.spyOn(perun, 'log')
+                .mockImplementation()
+            const lookForSensitiveDataSpy = jest.spyOn(perun, 'lookForSensitiveData')
+                .mockImplementation()
+            const lookForSqlInjectionSpy = jest.spyOn(perun, 'lookForSqlInjection')
+                .mockImplementation()
 
+            perun.analyzeFile('test')
+
+            expect(logSpy).toBeCalledTimes(1)
+            expect(logSpy).toBeCalledWith('cyan', 'Analyzing file test')
+
+            expect(lookForSensitiveDataSpy).toBeCalledTimes(1)
+            expect(lookForSensitiveDataSpy).toBeCalledWith('test', 'file-contents')
+
+            expect(lookForSqlInjectionSpy).toBeCalledTimes(1)
+            expect(lookForSqlInjectionSpy).toBeCalledWith('test', 'file-contents')
+        })
     })
 
     describe('lookForSensitiveData', () => {
