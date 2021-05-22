@@ -3,15 +3,13 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const rimraf = require('rimraf')
-const util = require('util')
 const uuid = require('uuid')
 const walkSync = require('walk-sync')
 
-const exec = util.promisify(require('child_process').exec)
-
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
+const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
-const verifySignature = require('./authenticate')
+const { verifySignature } = require('./authenticate')
 
 /**
  * Main Perun class
@@ -24,7 +22,7 @@ class Perun {
         this.cloneDir = path.join(os.tmpdir(), uuid.v4())
         this.foundProblems = []
 
-        this.searcher = new SensitiveDataSearcher()
+        this.sensitiveDataSearcher = new SensitiveDataSearcher()
     }
 
     async run (req, res) {
@@ -45,7 +43,8 @@ class Perun {
 
         try {
             if (success) {
-                this.searcher.build()
+                this.sensitiveDataSearcher.build()
+                // TODO: sqlSearcher build?
                 this.process()
             }
         } finally {
@@ -103,24 +102,22 @@ class Perun {
      * @param {string} file
      */
     analyzeFile (file) {
-        const extension = path.extname(file)
         const contents = fs.readFileSync(path.join(this.cloneDir, file)).toString()
 
         this.log('cyan', `Analyzing file ${file}`)
 
-        this.lookForSensitiveData(file, extension, contents)
-        this.lookForSqlInjection(file, extension, contents)
+        this.lookForSensitiveData(file, contents)
+        this.lookForSqlInjection(file, contents)
     }
 
     /**
      * Look for sensitive data inside file contents
      *
      * @param {string} file
-     * @param {string} extension
      * @param {string} contents
      */
-    lookForSensitiveData (file, extension, contents) {
-        const result = this.searcher.search(file, contents)
+    lookForSensitiveData (file, contents) {
+        const result = this.sensitiveDataSearcher.search(file, contents)
 
         if (!result.valid) {
             this.foundProblems = this.foundProblems.concat(result.problems)
@@ -131,10 +128,9 @@ class Perun {
      * Look for SQL injection inside file contents
      *
      * @param {string} file
-     * @param {string} extension
      * @param {string} contents
      */
-    lookForSqlInjection (file, extension, contents) {
+    lookForSqlInjection (file, contents) {
         // TODO: Look for sql injection only in specific filetypes
     }
 

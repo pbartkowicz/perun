@@ -3,7 +3,7 @@
 
 const crypto = require('crypto')
 
-const accessSecretVersion = require('./secret-gcloud')
+const { accessSecretVersion } = require('./secret-gcloud')
 
 /**
  * Check if signature is valid
@@ -21,4 +21,6 @@ const verifySignature = async (req) => {
     return signature === expectedSignature
 }
 
-module.exports = verifySignature
+module.exports = {
+    verifySignature
+}
