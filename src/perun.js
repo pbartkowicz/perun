@@ -40,7 +40,7 @@ class Perun {
             return
         }
 
-        const repositoryUrl = req.body['repository']['html_url']
+        const repositoryUrl = req.body.repository.html_url
         const success = await this.cloneRepository(repositoryUrl)
 
         try {
@@ -55,17 +55,17 @@ class Perun {
 
     /**
      * Check if action performed on the repository is one of edited, opened or reopened
-     * 
+     *
      * @param  {Request} req
      * @return {boolean}
      */
     verifyAction (req) {
-        return ['edited', 'opened', 'reopened'].includes(req.body['action'])
+        return ['edited', 'opened', 'reopened'].includes(req.body.action)
     }
 
     /**
      * Clone repository from github
-     * 
+     *
      * @param {string} repository
      */
     async cloneRepository (repository) {

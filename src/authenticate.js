@@ -7,7 +7,7 @@ const accessSecretVersion = require('./secret-gcloud')
 
 /**
  * Check if signature is valid
- * 
+ *
  * @param   {Request} req Request
  * @returns {boolean} Is signature valid
  */

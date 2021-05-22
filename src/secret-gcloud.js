@@ -11,16 +11,16 @@ const client = new SecretManagerServiceClient()
 
 /**
  * Retrieve secret value
- * 
- * @returns {string} 
+ *
+ * @returns {string}
  */
 const accessSecretVersion = async () => {
-  const [version] = await client.accessSecretVersion({
-    name: name
-  })
+    const [version] = await client.accessSecretVersion({
+        name: name
+    })
 
-  // Extract the payload as a string
-  return version.payload.data.toString()
+    // Extract the payload as a string
+    return version.payload.data.toString()
 }
 
 module.exports = accessSecretVersion
