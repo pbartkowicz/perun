@@ -19,7 +19,7 @@ const accessSecretVersion = require('./secret-gcloud')
 class Perun {
     constructor () {
         // https://cloud.google.com/functions/docs/env-var#newer_runtimes
-        this.debug = true
+        this.debug = process.env.FUNCTION_TARGET === undefined
 
         this.cloneDir = path.join(os.tmpdir(), uuid.v4())
         this.foundProblems = []
