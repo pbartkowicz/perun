@@ -62,10 +62,9 @@ describe('perun', () => {
         jest.restoreAllMocks()
     })
 
-    it('instantiates', () => {
+    it('should instantiate', () => {
         expect(() => {
             const perun = new Perun()
-
             expect(perun).toBeTruthy()
         }).not.toThrow()
     })
