@@ -3,10 +3,10 @@ const childProcess = require('child_process')
 const fs = require('fs')
 const rimraf = require('rimraf')
 
-const accessSecretVersion = require('../src/secret-gcloud')
 const authenticate = require('../src/authenticate')
 const Perun = require('../src/perun')
 const SensitiveDataSearcher = require('../src/sensitive-data-searcher')
+const promiseExec = require('../src/promise-exec')
 
 // Mocks
 jest.mock('chalk', () => {
@@ -43,11 +43,7 @@ jest.mock('uuid', () => {
 })
 
 jest.mock('../src/authenticate')
-jest.mock('../src/promise-exec', () => {
-    return {
-        exec: () => {}
-    }
-})
+jest.mock('../src/promise-exec')
 jest.mock('../src/secret-gcloud')
 jest.mock('../src/sensitive-data-searcher')
 
@@ -209,6 +205,7 @@ describe('perun', () => {
         ]
 
        test.each(testCases)('it should return correct value for "%s" action', (action, expectedResult) => {
+           // noinspection JSCheckFunctionSignatures
            const result = perun.verifyAction({
                body: {
                    action: action
@@ -223,14 +220,16 @@ describe('perun', () => {
         it('should log, clone repository', async () => {
             const logSpy = jest.spyOn(perun, 'log')
                 .mockImplementation(() => {})
-            const execSpy = jest.spyOn(childProcess, 'exec')
+            const execSpy = jest.spyOn(promiseExec, 'exec')
+                .mockImplementation(() => {
+                    return new Promise(resolve => resolve())
+                })
 
             await perun.cloneRepository('test')
 
             expect(logSpy).toBeCalledTimes(1)
-            // TODO: Poprawić
-            // expect(execSpy).toBeCalledTimes(1)
-            // expect(execSpy).toBeCalledWith('test')
+            expect(execSpy).toBeCalledTimes(1)
+            expect(execSpy).toBeCalledWith('git clone test os-tmpdir;uuid-v4')
         })
     })
 
@@ -403,7 +402,7 @@ describe('perun', () => {
             perun.logRaw('test')
             perun.logRaw('test1', 'test2')
 
-            expect(spy).toBeCalledTimes(0)
+            expect(spy).not.toBeCalled()
 
             spy.mockRestore()
         })
