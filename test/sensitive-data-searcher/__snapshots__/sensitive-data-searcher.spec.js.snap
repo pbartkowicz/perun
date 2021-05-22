@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SensitiveDataSearcher search it should find problems in file invalid_3.js 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_3.js",
+      "line": Object {
+        "contents": "const user = 'Magic'    // Problem",
+        "number": 9,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.js",
+      "line": Object {
+        "contents": "var username = '5'      // Problem",
+        "number": 7,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.js",
+      "line": Object {
+        "contents": "let password = 'beef'   // Problem",
+        "number": 8,
+      },
+      "type": "Sensitive data",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SensitiveDataSearcher search it should find problems in file invalid_3.ts 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_3.ts",
+      "line": Object {
+        "contents": "const user = 'Magic'    // Problem",
+        "number": 8,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.ts",
+      "line": Object {
+        "contents": "var username = '5'      // Problem",
+        "number": 6,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.ts",
+      "line": Object {
+        "contents": "password = 'beef'       // Problem",
+        "number": 7,
+      },
+      "type": "Sensitive data",
+    },
+  ],
+  "valid": false,
+}
+`;

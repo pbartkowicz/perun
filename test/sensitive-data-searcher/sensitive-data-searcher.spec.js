@@ -44,14 +44,16 @@ describe('SensitiveDataSearcher', () => {
         const invalidFiles = fs.readdirSync(invalidFilesPath)
         const validFiles = fs.readdirSync(validFilesPath)
 
+        // Number after _ means how many problems should be found in file
         test.each(invalidFiles)('it should find problems in file %s', (filename) => {
             const contents = fs.readFileSync(path.join(invalidFilesPath, filename)).toString()
+            const expectedErrorsCount = parseInt(filename.split('_')[1].split('.')[0])
 
             searcher.build()
-            const results = searcher.search('test', contents)
+            const results = searcher.search(filename, contents)
 
             expect(results.valid).toBe(false)
-            expect(results.problems).toHaveLength(5)
+            expect(results.problems).toHaveLength(expectedErrorsCount)
             expect(results).toMatchSnapshot()
         })
 
