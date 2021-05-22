@@ -59,6 +59,10 @@ describe('perun', () => {
         perun = new Perun()
     })
 
+    afterEach(() => {
+        jest.restoreAllMocks()
+    })
+
     it('instantiates', () => {
         expect(() => {
             const perun = new Perun()
@@ -77,6 +81,25 @@ describe('perun', () => {
 
     describe('run', () => {
 
+    })
+
+    describe('verifyAction', () => {
+        const testCases = [
+            ['edited', true],
+            ['opened', true],
+            ['reopened', true],
+            ['not-valid', false]
+        ]
+
+       test.each(testCases)('it should return correct value for "%s" action', (action, expectedResult) => {
+           const result = perun.verifyAction({
+               body: {
+                   action: action
+               }
+           })
+
+           expect(result).toBe(expectedResult)
+       })
     })
 
     describe('cloneRepository', () => {
@@ -134,7 +157,7 @@ describe('perun', () => {
 
     describe('analyzeFile', () => {
         it('should read file contents, log info and pass it to the searchers', () => {
-            const fsSpy = jest.spyOn(fs, 'readFileSync')
+            const readFileSyncSpy = jest.spyOn(fs, 'readFileSync')
                 .mockImplementation(() => 'file-contents')
             const logSpy = jest.spyOn(perun, 'log')
                 .mockImplementation()
@@ -144,6 +167,8 @@ describe('perun', () => {
                 .mockImplementation()
 
             perun.analyzeFile('test')
+
+            expect(readFileSyncSpy).toBeCalledTimes(1)
 
             expect(logSpy).toBeCalledTimes(1)
             expect(logSpy).toBeCalledWith('cyan', 'Analyzing file test')
