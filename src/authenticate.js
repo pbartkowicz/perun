@@ -12,7 +12,7 @@ const { accessSecretVersion } = require('./secret-gcloud')
  * @returns {boolean} Is signature valid
  */
 const verifySignature = async (req) => {
-    const secret = await accessSecretVersion()
+    const secret = await accessSecretVersion(process.env.SECRET_PATH)
     const hmac = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body))
 
     const expectedSignature = `sha256=${hmac.digest('hex')}`
