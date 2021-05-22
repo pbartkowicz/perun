@@ -1,5 +1,69 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`SensitiveDataSearcher search it should find problems in file invalid_3.c 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_3.c",
+      "line": Object {
+        "contents": "int user = 7;                   // Problem, not at all, but show it.",
+        "number": 13,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.c",
+      "line": Object {
+        "contents": "username = 'gibberish';         // Problem",
+        "number": 9,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.c",
+      "line": Object {
+        "contents": "char* password = 'not-a-test';  // Problem",
+        "number": 7,
+      },
+      "type": "Sensitive data",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SensitiveDataSearcher search it should find problems in file invalid_3.java 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_3.java",
+      "line": Object {
+        "contents": "private String user = 'root'    // Problem",
+        "number": 6,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.java",
+      "line": Object {
+        "contents": "String username = '5';  // Problem",
+        "number": 2,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_3.java",
+      "line": Object {
+        "contents": "this.password = '6';    // Problem",
+        "number": 9,
+      },
+      "type": "Sensitive data",
+    },
+  ],
+  "valid": false,
+}
+`;
+
 exports[`SensitiveDataSearcher search it should find problems in file invalid_3.js 1`] = `
 Object {
   "problems": Array [
@@ -55,6 +119,46 @@ Object {
       "file": "invalid_3.ts",
       "line": Object {
         "contents": "password = 'beef'       // Problem",
+        "number": 7,
+      },
+      "type": "Sensitive data",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SensitiveDataSearcher search it should find problems in file invalid_4.cpp 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_4.cpp",
+      "line": Object {
+        "contents": "int user = 7;                           // Problem, not at all, but show it.",
+        "number": 13,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_4.cpp",
+      "line": Object {
+        "contents": "string user = 'root';                   // Problem",
+        "number": 20,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_4.cpp",
+      "line": Object {
+        "contents": "username = 'gibberish';                 // Problem",
+        "number": 9,
+      },
+      "type": "Sensitive data",
+    },
+    Object {
+      "file": "invalid_4.cpp",
+      "line": Object {
+        "contents": "std::string password = 'not-a-test';    // Problem",
         "number": 7,
       },
       "type": "Sensitive data",
