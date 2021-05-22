@@ -11,6 +11,7 @@ const exec = util.promisify(require('child_process').exec)
 
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
+const accessSecretVersion = require('./secret-gcloud')
 
 /**
  * Main Perun class
@@ -30,6 +31,7 @@ class Perun {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
 
+        const secret = await accessSecretVersion()
         const repositoryUrl = 'https://github.com/pbartkowicz/perun' // TODO: From request
         const success = await this.cloneRepository(repositoryUrl)
 
