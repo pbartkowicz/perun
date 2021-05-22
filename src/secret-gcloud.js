@@ -1,7 +1,7 @@
 // https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets#secretmanager-access-secret-version-nodejs
 
 // const name = 'projects/my-project/secrets/my-secret/versions/5';
-const name = 'projects/hopeful-sunset-311310/secrets/test-secret/versions/latest';
+const name = process.env.SECRET_PATH;
 
 // Imports the Secret Manager library
 const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
@@ -15,14 +15,7 @@ async function accessSecretVersion() {
   });
 
   // Extract the payload as a string.
-  const payload = version.payload.data.toString();
-
-  // WARNING: Do not print the secret in a production environment - this
-  // snippet is showing how to access the secret material.
-  console.info(`Payload: ${payload}`);
-  return payload;
+  return version.payload.data.toString();
 }
 
 module.exports = accessSecretVersion;
-
-//accessSecretVersion();

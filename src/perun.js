@@ -32,7 +32,6 @@ class Perun {
         this.logRaw(req)
 
         const secret = await accessSecretVersion()
-        this.log(secret)
         const repositoryUrl = 'https://github.com/pbartkowicz/perun' // TODO: From request
         const success = await this.cloneRepository(repositoryUrl)
 
