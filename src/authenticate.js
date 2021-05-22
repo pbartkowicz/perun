@@ -18,7 +18,7 @@ const verifySignature = async (req) => {
     const expectedSignature = `sha256=${hmac.digest('hex')}`
     const signature = req.headers['x-hub-signature-256']
 
-    return signature === expectedSignature
+    return crypto.timingSafeEqual(signature, expectedSignature)
 }
 
 module.exports = {
