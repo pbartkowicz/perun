@@ -21,4 +21,6 @@ const verifySignature = async (req) => {
     return signature === expectedSignature
 }
 
-module.exports = verifySignature
+module.exports = {
+    verifySignature
+}

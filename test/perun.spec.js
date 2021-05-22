@@ -4,6 +4,7 @@ const fs = require('fs')
 const rimraf = require('rimraf')
 
 const accessSecretVersion = require('../src/secret-gcloud')
+const authenticate = require('../src/authenticate')
 const Perun = require('../src/perun')
 const SensitiveDataSearcher = require('../src/sensitive-data-searcher')
 
@@ -40,6 +41,8 @@ jest.mock('uuid', () => {
         v4: () => 'uuid-v4'
     }
 })
+
+jest.mock('../src/authenticate')
 jest.mock('../src/promise-exec', () => {
     return {
         exec: () => {}
@@ -76,11 +79,125 @@ describe('perun', () => {
         expect(perun.cloneDir).toBe('os-tmpdir;uuid-v4')
         expect(perun.foundProblems).toBeInstanceOf(Array)
         expect(perun.foundProblems).toHaveLength(0)
-        expect(perun.searcher).toBeInstanceOf(SensitiveDataSearcher)
+        expect(perun.sensitiveDataSearcher).toBeInstanceOf(SensitiveDataSearcher)
     })
 
     describe('run', () => {
+        const status = {
+            send () {}
+        }
+        const response = {
+            bar: 'response',
+            status () {
+                return status
+            }
+        }
 
+        let authenticateSpy
+        let cleanupSpy
+        let cloneRepositorySpy
+        let logSpy
+        let logRawSpy
+        let processSpy
+        let statusSpy
+        let sendSpy
+        let verifySpy
+
+        beforeEach(() => {
+            cloneRepositorySpy = jest.spyOn(perun, 'cloneRepository')
+            cleanupSpy = jest.spyOn(perun, 'cleanup').mockImplementation()
+            logSpy = jest.spyOn(perun, 'log').mockImplementation()
+            logRawSpy = jest.spyOn(perun, 'logRaw').mockImplementation()
+            processSpy = jest.spyOn(perun, 'process').mockImplementation()
+            verifySpy = jest.spyOn(perun, 'verifyAction')
+
+            authenticateSpy = jest.spyOn(authenticate, 'verifySignature')
+            statusSpy = jest.spyOn(response, 'status')
+            sendSpy = jest.spyOn(status, 'send')
+        })
+
+        it('should log information at start and call 403 on invalid signature', async () => {
+            authenticateSpy.mockImplementation(() => {
+                return new Promise(resolve => resolve(false))
+            })
+
+            await perun.run({ foo: 'request' }, response)
+
+            expect(logSpy).toBeCalledTimes(1)
+            expect(logSpy).toBeCalledWith('yellow', 'Request data: ')
+
+            expect(logRawSpy).toBeCalledTimes(1)
+            expect(logRawSpy).toBeCalledWith({ foo: 'request' })
+
+            expect(statusSpy).toBeCalledTimes(1)
+            expect(statusSpy).toBeCalledWith(403)
+
+            expect(sendSpy).toBeCalledTimes(1)
+            expect(sendSpy).toBeCalledWith('Unauthorized')
+        })
+
+        it('should return if action verification fails', async () => {
+            verifySpy.mockImplementation(() => false)
+            authenticateSpy.mockImplementation(() => {
+                return new Promise(resolve => resolve(true))
+            })
+
+            await perun.run({ foo: 'request' }, response)
+
+            expect(statusSpy).not.toHaveBeenCalled()
+            expect(sendSpy).not.toHaveBeenCalled()
+            expect(cloneRepositorySpy).not.toHaveBeenCalled()
+        })
+
+        it('should run when verification succeeded', async () => {
+            verifySpy.mockImplementation(() => true)
+            cloneRepositorySpy.mockImplementation(() => true)
+            authenticateSpy.mockImplementation(() => {
+                return new Promise(resolve => resolve(true))
+            })
+
+            const sensitiveSearcherSpy = jest.spyOn(perun.sensitiveDataSearcher, 'build')
+                .mockImplementation()
+
+            await perun.run({
+                body: {
+                    repository: {
+                        html_url: 'test-url'
+                    }
+                }
+            }, response)
+
+            expect(cloneRepositorySpy).toBeCalledTimes(1)
+            expect(cloneRepositorySpy).toBeCalledWith('test-url')
+
+            expect(sensitiveSearcherSpy).toBeCalledTimes(1)
+            expect(processSpy).toBeCalledTimes(1)
+            expect(cleanupSpy).toBeCalledTimes(1)
+        })
+
+        it('should only cleanup if cloning failed', async () => {
+            verifySpy.mockImplementation(() => true)
+            cloneRepositorySpy.mockImplementation(() => false)
+            authenticateSpy.mockImplementation(() => {
+                return new Promise(resolve => resolve(true))
+            })
+
+            const sensitiveSearcherSpy = jest.spyOn(perun.sensitiveDataSearcher, 'build')
+                .mockImplementation()
+
+            await perun.run({
+                body: {
+                    repository: {
+                        html_url: 'test-url'
+                    }
+                }
+            }, response)
+
+            expect(cloneRepositorySpy).toBeCalledTimes(1)
+            expect(sensitiveSearcherSpy).not.toBeCalled()
+            expect(processSpy).not.toBeCalled()
+            expect(cleanupSpy).toBeCalledTimes(1)
+        })
     })
 
     describe('verifyAction', () => {

@@ -9,7 +9,7 @@ const walkSync = require('walk-sync')
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
-const verifySignature = require('./authenticate')
+const { verifySignature } = require('./authenticate')
 
 /**
  * Main Perun class
@@ -22,7 +22,7 @@ class Perun {
         this.cloneDir = path.join(os.tmpdir(), uuid.v4())
         this.foundProblems = []
 
-        this.searcher = new SensitiveDataSearcher()
+        this.sensitiveDataSearcher = new SensitiveDataSearcher()
     }
 
     async run (req, res) {
@@ -43,7 +43,8 @@ class Perun {
 
         try {
             if (success) {
-                this.searcher.build()
+                this.sensitiveDataSearcher.build()
+                // TODO: sqlSearcher build?
                 this.process()
             }
         } finally {
@@ -116,7 +117,7 @@ class Perun {
      * @param {string} contents
      */
     lookForSensitiveData (file, contents) {
-        const result = this.searcher.search(file, contents)
+        const result = this.sensitiveDataSearcher.search(file, contents)
 
         if (!result.valid) {
             this.foundProblems = this.foundProblems.concat(result.problems)
