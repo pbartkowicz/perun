@@ -18,7 +18,7 @@ jest.mock('chalk', () => {
 })
 jest.mock('child_process', () => {
     return {
-        exec: () => {}
+        execFile: () => {}
     }
 })
 jest.mock('os', () => {
@@ -157,13 +157,19 @@ describe('perun', () => {
             await perun.run({
                 body: {
                     repository: {
-                        html_url: 'test-url'
+                        html_url: 'test-url',
+
+                    },
+                    pull_request: {
+                        head: {
+                            ref: 'branch'
+                        }
                     }
                 }
             }, response)
 
             expect(cloneRepositorySpy).toBeCalledTimes(1)
-            expect(cloneRepositorySpy).toBeCalledWith('test-url')
+            expect(cloneRepositorySpy).toBeCalledWith('test-url', 'branch')
 
             expect(sensitiveSearcherSpy).toBeCalledTimes(1)
             expect(processSpy).toBeCalledTimes(1)
@@ -219,16 +225,16 @@ describe('perun', () => {
         it('should log, clone repository', async () => {
             const logSpy = jest.spyOn(perun, 'log')
                 .mockImplementation(() => {})
-            const execSpy = jest.spyOn(promiseExec, 'exec')
+            const execSpy = jest.spyOn(promiseExec, 'execFile')
                 .mockImplementation(() => {
                     return new Promise(resolve => resolve())
                 })
 
-            await perun.cloneRepository('test')
+            await perun.cloneRepository('test', 'branch')
 
             expect(logSpy).toBeCalledTimes(1)
             expect(execSpy).toBeCalledTimes(1)
-            expect(execSpy).toBeCalledWith('git clone test os-tmpdir;uuid-v4')
+            expect(execSpy).toBeCalledWith('git', ['clone', '-b', 'branch', 'test', 'os-tmpdir;uuid-v4'])
         })
     })
 

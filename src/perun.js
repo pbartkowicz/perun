@@ -61,8 +61,7 @@ class Perun {
             this.octokitApp = await newOctokitApp()
             this.octokitInstallation = await newOctokitInstallation(req, this.octokitApp)
         } catch (e) {
-            res.status(500)
-            console.error(e.message)
+            res.status(500).send(e.message)
             return
         }
 
@@ -70,8 +69,7 @@ class Perun {
             await this.sensitiveDataCheckRun.create(req, this.octokitInstallation)
             await this.sqlInjectionCheckRun.create(req, this.octokitInstallation)
         } catch (e) {
-            res.status(500)
-            console.error(e.message)
+            res.status(500).send(e.message)
             return
         }
 
@@ -88,8 +86,7 @@ class Perun {
                 await this.sqlInjectionCheckRun.update(req, this.octokitInstallation)
             }
         } catch (e) {
-            res.status(500)
-            console.error(e.message)
+            res.status(500).send(e.message)
         }
         finally {
             this.cleanup()
