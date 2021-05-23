@@ -10,7 +10,7 @@ const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
-const { updateCheckRun, createOrGetCheckRun } = require('./checks')
+const { CheckRun } = require('./checks')
 
 /**
  * Main Perun class
@@ -27,6 +27,8 @@ class Perun {
 
         this.octokitApp = null
         this.octokitInstallation = null
+
+        this.sensitiveDataCheckRun = new CheckRun('sensitive-data')
     }
 
     async run(req, res) {
@@ -52,9 +54,8 @@ class Perun {
         }
         console.log('installation ok')
 
-        let sensitiveDataId = null
         try {
-            sensitiveDataId = await createOrGetCheckRun(req, this.octokitInstallation, 'sensitive-data')
+            await this.sensitiveDataCheckRun.createOrGet(req, this.octokitInstallation)
         } catch (e) {
             res.status(500)
             console.error(e.message)
@@ -68,10 +69,10 @@ class Perun {
         try {
             if (success) {
                 this.sensitiveDataSearcher.build()
-                // TODO: sqlSearcher build?
                 this.process()
                 console.log('processed')
-                await updateCheckRun(req, this.octokitInstallation, sensitiveDataId, 'sensitive-data') // TODO: pass check results
+                this.sensitiveDataCheckRun.status = 'completed'
+                await this.sensitiveDataCheckRun.update(req, this.octokitInstallation)
                 console.log('update check run ok')
             }
         } catch (e) {
