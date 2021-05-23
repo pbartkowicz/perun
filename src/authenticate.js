@@ -43,7 +43,10 @@ const newOctokitApp = async () => {
 
 const newOctokitInstallation = async (req, octokitApp) => {
     const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
-    const res = await octokitApp.request(`GET /repos/${req.body.repository.owner.login}/${req.body.repository.name}/installation`)
+    const res = await octokitApp.request('GET /repos/{owner}/{repo}/installation', {
+        owner: req.body.repository.owner.login,
+        repo: req.body.repository.name
+    })
     
     if (res.status !== 200) {
         throw new Error(`${JSON.stringify(res)}`)

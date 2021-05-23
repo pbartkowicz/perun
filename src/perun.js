@@ -10,7 +10,7 @@ const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
 const { exec } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
-const { createCheckRun, updateCheckRun } = require('./checks')
+const { updateCheckRun, createOrGetCheckRun } = require('./checks')
 
 /**
  * Main Perun class
@@ -42,22 +42,25 @@ class Perun {
             return
         }
 
-        this.octokitApp = await newOctokitApp()
         try {
+            this.octokitApp = await newOctokitApp()
             this.octokitInstallation = await newOctokitInstallation(req, this.octokitApp)
         } catch (e) {
-            res.status(500).send(e)
+            res.status(500)
+            console.error(e.message)
             return
         }
+        console.log('installation ok')
 
-        // TODO: Handle checks based on an action passed in request
-        let sensitiveDataCR = null
+        let sensitiveDataId = null
         try {
-            sensitiveDataCR = await createCheckRun(req, this.octokitInstallation, 'sensitive-data')
+            sensitiveDataId = await createOrGetCheckRun(req, this.octokitInstallation, 'sensitive-data')
         } catch (e) {
-            res.status(500).send(e)
+            res.status(500)
+            console.error(e.message)
             return
         }
+        console.log('create or get ok')
 
         const repositoryUrl = req.body.repository.html_url
         const success = await this.cloneRepository(repositoryUrl)
@@ -67,10 +70,13 @@ class Perun {
                 this.sensitiveDataSearcher.build()
                 // TODO: sqlSearcher build?
                 this.process()
-                await updateCheckRun(req, this.octokitInstallation, sensitiveDataCR.data.id, 'sensitive-data') // TODO: pass check results
+                console.log('processed')
+                await updateCheckRun(req, this.octokitInstallation, sensitiveDataId, 'sensitive-data') // TODO: pass check results
+                console.log('update check run ok')
             }
         } catch (e) {
-            res.status(500).send(e)
+            res.status(500)
+            console.error(e.message)
         }
         finally {
             this.cleanup()
