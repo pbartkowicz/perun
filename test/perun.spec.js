@@ -43,6 +43,7 @@ jest.mock('uuid', () => {
 })
 
 jest.mock('../src/authenticate')
+jest.mock('../src/checks')
 jest.mock('../src/promise-exec')
 jest.mock('../src/secret-gcloud')
 jest.mock('../src/sensitive-data-searcher')
@@ -93,6 +94,8 @@ describe('perun', () => {
         let cloneRepositorySpy
         let logSpy
         let logRawSpy
+        let newOctokitAppSpy
+        let newOctokitInstallationSpy
         let processSpy
         let statusSpy
         let sendSpy
@@ -103,6 +106,8 @@ describe('perun', () => {
             cleanupSpy = jest.spyOn(perun, 'cleanup').mockImplementation()
             logSpy = jest.spyOn(perun, 'log').mockImplementation()
             logRawSpy = jest.spyOn(perun, 'logRaw').mockImplementation()
+            newOctokitAppSpy = jest.spyOn(authenticate, 'newOctokitApp')
+            newOctokitInstallationSpy = jest.spyOn(authenticate, 'newOctokitInstallation')
             processSpy = jest.spyOn(perun, 'process').mockImplementation()
             verifySpy = jest.spyOn(perun, 'verifyAction')
 
@@ -147,9 +152,9 @@ describe('perun', () => {
         it('should run when verification succeeded', async () => {
             verifySpy.mockImplementation(() => true)
             cloneRepositorySpy.mockImplementation(() => true)
-            authenticateSpy.mockImplementation(() => {
-                return new Promise(resolve => resolve(true))
-            })
+            authenticateSpy.mockImplementation(() => new Promise(resolve => resolve(true)))
+            newOctokitAppSpy.mockImplementation(() => new Promise(resolve => resolve()))
+            newOctokitInstallationSpy.mockImplementation(() => new Promise(resolve => resolve()))
 
             const sensitiveSearcherSpy = jest.spyOn(perun.sensitiveDataSearcher, 'build')
                 .mockImplementation()
@@ -190,6 +195,11 @@ describe('perun', () => {
                 body: {
                     repository: {
                         html_url: 'test-url'
+                    },
+                    pull_request: {
+                        head: {
+                            ref: 'test-ref'
+                        }
                     }
                 }
             }, response)
