@@ -28,8 +28,20 @@ class Perun {
         this.octokitApp = null
         this.octokitInstallation = null
 
-        this.sensitiveDataCheckRun = new CheckRun('sensitive-data', 'Sensitive Data Check', 'Found potential hardcoded sensitive data')
-        this.sqlInjectionCheckRun = new CheckRun('sql-injection', 'SQL Injection Check', 'Found potential sql injection')
+        this.sensitiveDataCheckRun = new CheckRun(
+            'sensitive-data',
+            'Sensitive Data Check',
+            'Found potential hardcoded sensitive data',
+            'Sensitive data',
+            'Please make sure to store sensitive data in the secure location'
+        )
+        this.sqlInjectionCheckRun = new CheckRun(
+            'sql-injection',
+            'SQL Injection Check',
+            'Found potential sql injection',
+            'todo', // TODO: Change it to the type of problem for sql injection
+            'Please make sure to prevent SQL Injection'
+        )
     }
 
     async run(req, res) {
@@ -53,17 +65,15 @@ class Perun {
             console.error(e.message)
             return
         }
-        console.log('installation ok')
 
         try {
-            await this.sensitiveDataCheckRun.createOrGet(req, this.octokitInstallation)
-            await this.sqlInjectionCheckRun.createOrGet(req, this.octokitInstallation)
+            await this.sensitiveDataCheckRun.create(req, this.octokitInstallation)
+            await this.sqlInjectionCheckRun.create(req, this.octokitInstallation)
         } catch (e) {
             res.status(500)
             console.error(e.message)
             return
         }
-        console.log('create or get ok')
 
         const repositoryUrl = req.body.repository.html_url
         const success = await this.cloneRepository(repositoryUrl, req.body.pull_request.head.ref)
@@ -72,10 +82,10 @@ class Perun {
             if (success) {
                 this.sensitiveDataSearcher.build()
                 this.process()
-                console.log('processed')
+                this.sensitiveDataCheckRun.updateStatus(this.foundProblems)
+                this.sqlInjectionCheckRun.updateStatus(this.foundProblems)
                 await this.sensitiveDataCheckRun.update(req, this.octokitInstallation)
                 await this.sqlInjectionCheckRun.update(req, this.octokitInstallation)
-                console.log('update check run ok')
             }
         } catch (e) {
             res.status(500)
@@ -125,13 +135,9 @@ class Perun {
             this.analyzeFile(p)
         }
 
-        this.updateCheckStatus(this.sensitiveDataCheckRun, 'Sensitive data', 'Please make sure to store sensitive data in the secure location')
-        this.updateCheckStatus(this.sqlInjectionCheckRun, 'todo', 'Please make sure to prevent SQL Injection') // TODO: Change it to the type of problem for sql injection
-
         if (this.foundProblems.length > 0) {
             this.log('red', 'Found problems: ')
             this.logRaw(this.foundProblems)
-            console.log(this.foundProblems)
 
         } else {
             this.log('green', 'No problems found')
@@ -174,34 +180,6 @@ class Perun {
      */
     lookForSqlInjection(file, contents) {
         // TODO: Look for sql injection only in specific filetypes
-    }
-
-    /**
-     * 
-     * @param {*} check 
-     * @param {*} problemsType 
-     * @param {*} msg 
-     * @returns 
-     */
-    updateCheckStatus(check, problemsType, msg) {
-        check.status = 'completed'
-        const problems = this.foundProblems.filter(p => {
-            return p.type === problemsType
-        })
-        if (problems.length === 0) {
-            check.conclusion = 'success'
-            return
-        }
-        check.conclusion = 'failure'
-        problems.forEach(p => {
-            check.output.annotations.push({
-                path: p.file,
-                start_line: p.line.number,
-                end_line: p.line.number,
-                annotation_level: 'warning',
-                message: msg
-            })
-        })
     }
 
     /**

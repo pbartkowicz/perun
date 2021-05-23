@@ -4,7 +4,7 @@
  * CheckRun represents github's check run object.
  */
 class CheckRun {
-    constructor(name, title, summary) {
+    constructor(name, title, summary, problemsType, msg) {
         this.id = null
         this.name = name
         this.status = 'in_progress'
@@ -14,33 +14,18 @@ class CheckRun {
             summary: summary,
             annotations: []
         }
+        this.problemsType = problemsType
+        this.msg = msg
     }
 
     /**
-     * Create check run or update it's local state if a check run exists
+     * Create check run
      * 
      * @param {Request} req 
      * @param {Octokit} octokitInstallation
      */
-    async createOrGet(req, octokitInstallation) {
-        let res = await octokitInstallation.request('GET /repos/{owner}/{repo}/commits/{ref}/check-runs', {
-            owner: req.body.repository.owner.login,
-            repo: req.body.repository.name,
-            ref: req.body.pull_request.head.ref,
-            check_name: this.name,
-        })
-
-        if (res.status !== 200) {
-            throw new Error(`${JSON.stringify(res)}`)
-        }
-
-        // Check already exists
-        if (res.data.total_count > 0) {
-            this.id = res.data.check_runs[0].id
-            return
-        }
-
-        res = await octokitInstallation.request('POST /repos/{owner}/{repo}/check-runs', {
+    async create(req, octokitInstallation) {
+        const res = await octokitInstallation.request('POST /repos/{owner}/{repo}/check-runs', {
             owner: req.body.repository.owner.login,
             repo: req.body.repository.name,
             name: this.name,
@@ -55,13 +40,12 @@ class CheckRun {
     }
 
     /**
-     * Update check run by passing it's results.
+     * Update check run by passing it's results
      * 
      * @param {Request} req 
      * @param {Octokit} octokitInstallation
      */
     async update(req, octokitInstallation) {
-        console.log(this.output)
         let body = {
             owner: req.body.repository.owner.login,
             repo: req.body.repository.name,
@@ -83,9 +67,31 @@ class CheckRun {
         }
     }
 
-    // updateStatus() {
-
-    // }
+    /**
+     * Updates local status of check run based on results of scan
+     * 
+     * @param {[]object} foundProblems 
+     */
+    updateStatus(foundProblems) {
+        this.status = 'completed'
+        const problems = foundProblems.filter(p => {
+            return p.type === this.problemsType
+        })
+        if (problems.length === 0) {
+            this.conclusion = 'success'
+            return
+        }
+        this.conclusion = 'failure'
+        problems.forEach(p => {
+            this.output.annotations.push({
+                path: p.file,
+                start_line: p.line.number,
+                end_line: p.line.number,
+                annotation_level: 'warning',
+                message: this.msg
+            })
+        })
+    }
 }
 
 module.exports = {
