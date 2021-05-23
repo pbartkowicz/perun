@@ -5,8 +5,8 @@
 
 const crypto = require('crypto')
 
-const { Octokit } = require("@octokit/core")
-const { createAppAuth } = require("@octokit/auth-app")
+const { Octokit } = require('@octokit/core')
+const { createAppAuth } = require('@octokit/auth-app')
 
 const { accessSecretVersion } = require('./secret-gcloud')
 
@@ -28,28 +28,28 @@ const verifySignature = async (req) => {
 
 /**
  * Create new Octokit application
- * 
+ *
  * @returns {Octokit}
  */
 const newOctokitApp = async () => {
     const secret = await accessSecretVersion(process.env.SECRET_PATH)
     const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
-    
+
     return new Octokit({
         authStrategy: createAppAuth,
         auth: {
             appId: process.env.APP_ID,
             privateKey: privateKey,
             clientId: process.env.CLIENT_ID,
-            clientSecret: secret,
+            clientSecret: secret
         }
     })
 }
 
 /**
  * Create new Octokit installation application
- * @param {Request} req 
- * @param {Octokit} octokitApp 
+ * @param {Request} req
+ * @param {Octokit} octokitApp
  * @returns {Octokit}
  */
 const newOctokitInstallation = async (req, octokitApp) => {
@@ -58,9 +58,9 @@ const newOctokitInstallation = async (req, octokitApp) => {
         owner: req.body.repository.owner.login,
         repo: req.body.repository.name
     })
-    
+
     if (res.status !== 200) {
-        throw new Error(`${JSON.stringify(res)}`)
+        throw new Error(JSON.stringify(res))
     }
 
     return new Octokit({

@@ -16,7 +16,7 @@ const { CheckRun } = require('./checks')
  * Main Perun class
  */
 class Perun {
-    constructor() {
+    constructor () {
         // https://cloud.google.com/functions/docs/env-var#newer_runtimes
         this.debug = process.env.FUNCTION_TARGET === undefined
 
@@ -44,7 +44,7 @@ class Perun {
         )
     }
 
-    async run(req, res) {
+    async run (req, res) {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
 
@@ -87,8 +87,7 @@ class Perun {
             }
         } catch (e) {
             res.status(500).send(e.message)
-        }
-        finally {
+        } finally {
             this.cleanup()
         }
     }
@@ -99,7 +98,7 @@ class Perun {
      * @param  {Request} req
      * @return {boolean}
      */
-    verifyAction(req) {
+    verifyAction (req) {
         return ['edited', 'opened', 'reopened'].includes(req.body.action)
     }
 
@@ -109,7 +108,7 @@ class Perun {
      * @param {string} repository
      * @param {string} branch
      */
-    async cloneRepository(repository, branch) {
+    async cloneRepository (repository, branch) {
         this.log('green', `Cloning: ${repository} to ${this.cloneDir}`)
 
         const command = 'git'
@@ -122,7 +121,7 @@ class Perun {
     /**
      * Process repository
      */
-    process() {
+    process () {
         const paths = walkSync(this.cloneDir, {
             directories: false,
             ignore: ignoredFilesAndDirectories
@@ -135,7 +134,6 @@ class Perun {
         if (this.foundProblems.length > 0) {
             this.log('red', 'Found problems: ')
             this.logRaw(this.foundProblems)
-
         } else {
             this.log('green', 'No problems found')
         }
@@ -146,7 +144,7 @@ class Perun {
      *
      * @param {string} file
      */
-    analyzeFile(file) {
+    analyzeFile (file) {
         const contents = fs.readFileSync(path.join(this.cloneDir, file)).toString()
 
         this.log('cyan', `Analyzing file ${file}`)
@@ -161,7 +159,7 @@ class Perun {
      * @param {string} file
      * @param {string} contents
      */
-    lookForSensitiveData(file, contents) {
+    lookForSensitiveData (file, contents) {
         const result = this.sensitiveDataSearcher.search(file, contents)
 
         if (!result.valid) {
@@ -175,26 +173,26 @@ class Perun {
      * @param {string} file
      * @param {string} contents
      */
-    lookForSqlInjection(file, contents) {
+    lookForSqlInjection (file, contents) {
         // TODO: Look for sql injection only in specific filetypes
     }
 
     /**
      * Cleanup after processing
      */
-    cleanup() {
+    cleanup () {
         this.log('green', `Cleaning up from ${this.cloneDir}`)
 
         rimraf.sync(this.cloneDir)
     }
 
-    logRaw(...messages) {
+    logRaw (...messages) {
         if (this.debug) {
             console.log(...messages)
         }
     }
 
-    log(color = 'blue', ...messages) {
+    log (color = 'blue', ...messages) {
         if (chalk.supportsColor) {
             this.logRaw(chalk[color](...messages))
         } else {
