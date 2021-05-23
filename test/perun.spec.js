@@ -157,7 +157,7 @@ describe('perun', () => {
             await perun.run({
                 body: {
                     repository: {
-                        html_url: 'test-url',
+                        html_url: 'test-url'
 
                     },
                     pull_request: {
@@ -209,16 +209,16 @@ describe('perun', () => {
             ['not-valid', false]
         ]
 
-       test.each(testCases)('it should return correct value for "%s" action', (action, expectedResult) => {
-           // noinspection JSCheckFunctionSignatures
-           const result = perun.verifyAction({
-               body: {
-                   action: action
-               }
-           })
+        test.each(testCases)('it should return correct value for "%s" action', (action, expectedResult) => {
+            // noinspection JSCheckFunctionSignatures
+            const result = perun.verifyAction({
+                body: {
+                    action: action
+                }
+            })
 
-           expect(result).toBe(expectedResult)
-       })
+            expect(result).toBe(expectedResult)
+        })
     })
 
     describe('cloneRepository', () => {
@@ -239,7 +239,7 @@ describe('perun', () => {
     })
 
     describe('process', () => {
-        let testDir = './test/test-directory/'
+        const testDir = './test/test-directory/'
 
         it('should analyze all files and log without problems', () => {
             const analyzeSpy = jest.spyOn(perun, 'analyzeFile')
@@ -321,7 +321,7 @@ describe('perun', () => {
         it('should append data if searcher found problems', () => {
             const problems = [
                 { foo: 'bar' },
-                { bar: 'baz '}
+                { bar: 'baz ' }
             ]
 
             const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
@@ -345,7 +345,7 @@ describe('perun', () => {
             ]
             const problems = [
                 { foo: 'bar' },
-                { bar: 'baz '}
+                { bar: 'baz ' }
             ]
 
             const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
@@ -384,7 +384,7 @@ describe('perun', () => {
     })
 
     describe('logRaw', () => {
-        it ('should log to console when debug is set to true', () => {
+        it('should log to console when debug is set to true', () => {
             const spy = jest.spyOn(console, 'log')
                 .mockImplementation(() => {})
 
