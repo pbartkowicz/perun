@@ -26,6 +26,11 @@ const verifySignature = async (req) => {
     return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
 }
 
+/**
+ * Create new Octokit application
+ * 
+ * @returns {Octokit}
+ */
 const newOctokitApp = async () => {
     const secret = await accessSecretVersion(process.env.SECRET_PATH)
     const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
@@ -41,6 +46,12 @@ const newOctokitApp = async () => {
     })
 }
 
+/**
+ * Create new Octokit installation application
+ * @param {Request} req 
+ * @param {Octokit} octokitApp 
+ * @returns {Octokit}
+ */
 const newOctokitInstallation = async (req, octokitApp) => {
     const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
     const res = await octokitApp.request('GET /repos/{owner}/{repo}/installation', {
