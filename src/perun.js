@@ -7,7 +7,7 @@ const uuid = require('uuid')
 const walkSync = require('walk-sync')
 
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
-const { exec } = require('./promise-exec')
+const { execFile } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
 const { CheckRun } = require('./checks')
@@ -28,7 +28,8 @@ class Perun {
         this.octokitApp = null
         this.octokitInstallation = null
 
-        this.sensitiveDataCheckRun = new CheckRun('sensitive-data')
+        this.sensitiveDataCheckRun = new CheckRun('sensitive-data', 'Sensitive Data Check', 'Found potential hardcoded sensitive data')
+        this.sqlInjectionCheckRun = new CheckRun('sql-injection', 'SQL Injection Check', 'Found potential sql injection')
     }
 
     async run(req, res) {
@@ -56,6 +57,7 @@ class Perun {
 
         try {
             await this.sensitiveDataCheckRun.createOrGet(req, this.octokitInstallation)
+            await this.sqlInjectionCheckRun.createOrGet(req, this.octokitInstallation)
         } catch (e) {
             res.status(500)
             console.error(e.message)
@@ -64,15 +66,15 @@ class Perun {
         console.log('create or get ok')
 
         const repositoryUrl = req.body.repository.html_url
-        const success = await this.cloneRepository(repositoryUrl)
+        const success = await this.cloneRepository(repositoryUrl, req.body.pull_request.head.ref)
 
         try {
             if (success) {
                 this.sensitiveDataSearcher.build()
                 this.process()
                 console.log('processed')
-                this.sensitiveDataCheckRun.status = 'completed'
                 await this.sensitiveDataCheckRun.update(req, this.octokitInstallation)
+                await this.sqlInjectionCheckRun.update(req, this.octokitInstallation)
                 console.log('update check run ok')
             }
         } catch (e) {
@@ -98,11 +100,14 @@ class Perun {
      * Clone repository from github
      *
      * @param {string} repository
+     * @param {string} branch
      */
-    async cloneRepository(repository) {
+    async cloneRepository(repository, branch) {
         this.log('green', `Cloning: ${repository} to ${this.cloneDir}`)
 
-        await exec(`git clone ${repository} ${this.cloneDir}`)
+        const command = 'git'
+        const args = ['clone', '-b', branch, repository, this.cloneDir]
+        await execFile(command, args)
 
         return true
     }
@@ -120,9 +125,14 @@ class Perun {
             this.analyzeFile(p)
         }
 
+        this.updateCheckStatus(this.sensitiveDataCheckRun, 'Sensitive data', 'Please make sure to store sensitive data in the secure location')
+        this.updateCheckStatus(this.sqlInjectionCheckRun, 'todo', 'Please make sure to prevent SQL Injection') // TODO: Change it to the type of problem for sql injection
+
         if (this.foundProblems.length > 0) {
             this.log('red', 'Found problems: ')
             this.logRaw(this.foundProblems)
+            console.log(this.foundProblems)
+
         } else {
             this.log('green', 'No problems found')
         }
@@ -164,6 +174,34 @@ class Perun {
      */
     lookForSqlInjection(file, contents) {
         // TODO: Look for sql injection only in specific filetypes
+    }
+
+    /**
+     * 
+     * @param {*} check 
+     * @param {*} problemsType 
+     * @param {*} msg 
+     * @returns 
+     */
+    updateCheckStatus(check, problemsType, msg) {
+        check.status = 'completed'
+        const problems = this.foundProblems.filter(p => {
+            return p.type === problemsType
+        })
+        if (problems.length === 0) {
+            check.conclusion = 'success'
+            return
+        }
+        check.conclusion = 'failure'
+        problems.forEach(p => {
+            check.output.annotations.push({
+                path: p.file,
+                start_line: p.line.number,
+                end_line: p.line.number,
+                annotation_level: 'warning',
+                message: msg
+            })
+        })
     }
 
     /**

@@ -1,13 +1,27 @@
 // https://docs.github.com/en/rest/reference/checks#create-a-check-run
 
+/**
+ * CheckRun represents github's check run object.
+ */
 class CheckRun {
-    constructor(name) {
+    constructor(name, title, summary) {
         this.id = null
         this.name = name
         this.status = 'in_progress'
         this.conclusion = 'success'
+        this.output = {
+            title: title,
+            summary: summary,
+            annotations: []
+        }
     }
 
+    /**
+     * Create check run or update it's local state if a check run exists
+     * 
+     * @param {Request} req 
+     * @param {Octokit} octokitInstallation
+     */
     async createOrGet(req, octokitInstallation) {
         let res = await octokitInstallation.request('GET /repos/{owner}/{repo}/commits/{ref}/check-runs', {
             owner: req.body.repository.owner.login,
@@ -40,8 +54,15 @@ class CheckRun {
         this.id = res.data.id
     }
 
+    /**
+     * Update check run by passing it's results.
+     * 
+     * @param {Request} req 
+     * @param {Octokit} octokitInstallation
+     */
     async update(req, octokitInstallation) {
-        const res = await octokitInstallation.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', {
+        console.log(this.output)
+        let body = {
             owner: req.body.repository.owner.login,
             repo: req.body.repository.name,
             check_run_id: this.id,
@@ -49,13 +70,22 @@ class CheckRun {
             head_sha: `${req.body.pull_request.head.sha}`,
             status: this.status,
             conclusion: this.conclusion
-            // TODO: output with annotations
-        })
+        }
+
+        if (this.output.annotations.length !== 0) {
+            body.output = this.output
+        }
+
+        const res = await octokitInstallation.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', body)
 
         if (res.status !== 200) {
             throw new Error(`${JSON.stringify(res)}`)
         }
     }
+
+    // updateStatus() {
+
+    // }
 }
 
 module.exports = {
