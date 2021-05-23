@@ -28,7 +28,10 @@ resource "google_cloudfunctions_function" "function" {
   source_archive_object = google_storage_bucket_object.archive.name
   service_account_email = google_service_account.function_sa.email
   environment_variables = {
-    "SECRET_PATH" = "projects/hopeful-sunset-311310/secrets/perun-secret/versions/latest"
+    "SECRET_PATH"      = "projects/hopeful-sunset-311310/secrets/perun-secret/versions/latest",
+    "PRIVATE_KEY_PATH" = "projects/hopeful-sunset-311310/secrets/perun-private-key/versions/latest",
+    "APP_ID"           = 111722,
+    "CLIENT_ID"        = "Iv1.b873a156f8ab41ef"
   }
 }
 

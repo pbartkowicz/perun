@@ -7,9 +7,10 @@ const uuid = require('uuid')
 const walkSync = require('walk-sync')
 
 const ignoredFilesAndDirectories = require('./ignore/files-and-dirs')
-const { exec } = require('./promise-exec')
+const { execFile } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
-const { verifySignature } = require('./authenticate')
+const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
+const { CheckRun } = require('./checks')
 
 /**
  * Main Perun class
@@ -23,6 +24,24 @@ class Perun {
         this.foundProblems = []
 
         this.sensitiveDataSearcher = new SensitiveDataSearcher()
+
+        this.octokitApp = null
+        this.octokitInstallation = null
+
+        this.sensitiveDataCheckRun = new CheckRun(
+            'sensitive-data',
+            'Sensitive Data Check',
+            'Found potential hardcoded sensitive data',
+            'Sensitive data',
+            'Please make sure to store sensitive data in the secure location'
+        )
+        this.sqlInjectionCheckRun = new CheckRun(
+            'sql-injection',
+            'SQL Injection Check',
+            'Found potential sql injection',
+            'todo', // TODO: Change it to the type of problem for sql injection
+            'Please make sure to prevent SQL Injection'
+        )
     }
 
     async run (req, res) {
@@ -38,15 +57,36 @@ class Perun {
             return
         }
 
+        try {
+            this.octokitApp = await newOctokitApp()
+            this.octokitInstallation = await newOctokitInstallation(req, this.octokitApp)
+        } catch (e) {
+            res.status(500).send(e.message)
+            return
+        }
+
+        try {
+            await this.sensitiveDataCheckRun.create(req, this.octokitInstallation)
+            await this.sqlInjectionCheckRun.create(req, this.octokitInstallation)
+        } catch (e) {
+            res.status(500).send(e.message)
+            return
+        }
+
         const repositoryUrl = req.body.repository.html_url
-        const success = await this.cloneRepository(repositoryUrl)
+        const success = await this.cloneRepository(repositoryUrl, req.body.pull_request.head.ref)
 
         try {
             if (success) {
                 this.sensitiveDataSearcher.build()
-                // TODO: sqlSearcher build?
                 this.process()
+                this.sensitiveDataCheckRun.updateStatus(this.foundProblems)
+                this.sqlInjectionCheckRun.updateStatus(this.foundProblems)
+                await this.sensitiveDataCheckRun.update(req, this.octokitInstallation)
+                await this.sqlInjectionCheckRun.update(req, this.octokitInstallation)
             }
+        } catch (e) {
+            res.status(500).send(e.message)
         } finally {
             this.cleanup()
         }
@@ -66,11 +106,14 @@ class Perun {
      * Clone repository from github
      *
      * @param {string} repository
+     * @param {string} branch
      */
-    async cloneRepository (repository) {
+    async cloneRepository (repository, branch) {
         this.log('green', `Cloning: ${repository} to ${this.cloneDir}`)
 
-        await exec(`git clone ${repository} ${this.cloneDir}`)
+        const command = 'git'
+        const args = ['clone', '-b', branch, repository, this.cloneDir]
+        await execFile(command, args)
 
         return true
     }

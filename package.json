@@ -14,8 +14,13 @@
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^3.6.1",
+    "@octokit/auth-app": "^3.4.0",
+    "@octokit/core": "^3.4.0",
     "chalk": "^4.1.0",
     "crypto": "^1.0.1",
+    "https": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "octokit": "^1.0.5",
     "rimraf": "^3.0.2",
     "simple-git": "^2.38.0",
     "uuid": "^8.3.2",

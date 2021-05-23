@@ -18,7 +18,7 @@ jest.mock('chalk', () => {
 })
 jest.mock('child_process', () => {
     return {
-        exec: () => {}
+        execFile: () => {}
     }
 })
 jest.mock('os', () => {
@@ -43,6 +43,7 @@ jest.mock('uuid', () => {
 })
 
 jest.mock('../src/authenticate')
+jest.mock('../src/checks')
 jest.mock('../src/promise-exec')
 jest.mock('../src/secret-gcloud')
 jest.mock('../src/sensitive-data-searcher')
@@ -93,6 +94,8 @@ describe('perun', () => {
         let cloneRepositorySpy
         let logSpy
         let logRawSpy
+        let newOctokitAppSpy
+        let newOctokitInstallationSpy
         let processSpy
         let statusSpy
         let sendSpy
@@ -103,6 +106,8 @@ describe('perun', () => {
             cleanupSpy = jest.spyOn(perun, 'cleanup').mockImplementation()
             logSpy = jest.spyOn(perun, 'log').mockImplementation()
             logRawSpy = jest.spyOn(perun, 'logRaw').mockImplementation()
+            newOctokitAppSpy = jest.spyOn(authenticate, 'newOctokitApp')
+            newOctokitInstallationSpy = jest.spyOn(authenticate, 'newOctokitInstallation')
             processSpy = jest.spyOn(perun, 'process').mockImplementation()
             verifySpy = jest.spyOn(perun, 'verifyAction')
 
@@ -147,9 +152,9 @@ describe('perun', () => {
         it('should run when verification succeeded', async () => {
             verifySpy.mockImplementation(() => true)
             cloneRepositorySpy.mockImplementation(() => true)
-            authenticateSpy.mockImplementation(() => {
-                return new Promise(resolve => resolve(true))
-            })
+            authenticateSpy.mockImplementation(() => new Promise(resolve => resolve(true)))
+            newOctokitAppSpy.mockImplementation(() => new Promise(resolve => resolve()))
+            newOctokitInstallationSpy.mockImplementation(() => new Promise(resolve => resolve()))
 
             const sensitiveSearcherSpy = jest.spyOn(perun.sensitiveDataSearcher, 'build')
                 .mockImplementation()
@@ -158,12 +163,18 @@ describe('perun', () => {
                 body: {
                     repository: {
                         html_url: 'test-url'
+
+                    },
+                    pull_request: {
+                        head: {
+                            ref: 'branch'
+                        }
                     }
                 }
             }, response)
 
             expect(cloneRepositorySpy).toBeCalledTimes(1)
-            expect(cloneRepositorySpy).toBeCalledWith('test-url')
+            expect(cloneRepositorySpy).toBeCalledWith('test-url', 'branch')
 
             expect(sensitiveSearcherSpy).toBeCalledTimes(1)
             expect(processSpy).toBeCalledTimes(1)
@@ -184,6 +195,11 @@ describe('perun', () => {
                 body: {
                     repository: {
                         html_url: 'test-url'
+                    },
+                    pull_request: {
+                        head: {
+                            ref: 'test-ref'
+                        }
                     }
                 }
             }, response)
@@ -203,37 +219,37 @@ describe('perun', () => {
             ['not-valid', false]
         ]
 
-       test.each(testCases)('it should return correct value for "%s" action', (action, expectedResult) => {
-           // noinspection JSCheckFunctionSignatures
-           const result = perun.verifyAction({
-               body: {
-                   action: action
-               }
-           })
+        test.each(testCases)('it should return correct value for "%s" action', (action, expectedResult) => {
+            // noinspection JSCheckFunctionSignatures
+            const result = perun.verifyAction({
+                body: {
+                    action: action
+                }
+            })
 
-           expect(result).toBe(expectedResult)
-       })
+            expect(result).toBe(expectedResult)
+        })
     })
 
     describe('cloneRepository', () => {
         it('should log, clone repository', async () => {
             const logSpy = jest.spyOn(perun, 'log')
                 .mockImplementation(() => {})
-            const execSpy = jest.spyOn(promiseExec, 'exec')
+            const execSpy = jest.spyOn(promiseExec, 'execFile')
                 .mockImplementation(() => {
                     return new Promise(resolve => resolve())
                 })
 
-            await perun.cloneRepository('test')
+            await perun.cloneRepository('test', 'branch')
 
             expect(logSpy).toBeCalledTimes(1)
             expect(execSpy).toBeCalledTimes(1)
-            expect(execSpy).toBeCalledWith('git clone test os-tmpdir;uuid-v4')
+            expect(execSpy).toBeCalledWith('git', ['clone', '-b', 'branch', 'test', 'os-tmpdir;uuid-v4'])
         })
     })
 
     describe('process', () => {
-        let testDir = './test/test-directory/'
+        const testDir = './test/test-directory/'
 
         it('should analyze all files and log without problems', () => {
             const analyzeSpy = jest.spyOn(perun, 'analyzeFile')
@@ -315,7 +331,7 @@ describe('perun', () => {
         it('should append data if searcher found problems', () => {
             const problems = [
                 { foo: 'bar' },
-                { bar: 'baz '}
+                { bar: 'baz ' }
             ]
 
             const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
@@ -339,7 +355,7 @@ describe('perun', () => {
             ]
             const problems = [
                 { foo: 'bar' },
-                { bar: 'baz '}
+                { bar: 'baz ' }
             ]
 
             const searchSpy = jest.spyOn(SensitiveDataSearcher.prototype, 'search')
@@ -378,7 +394,7 @@ describe('perun', () => {
     })
 
     describe('logRaw', () => {
-        it ('should log to console when debug is set to true', () => {
+        it('should log to console when debug is set to true', () => {
             const spy = jest.spyOn(console, 'log')
                 .mockImplementation(() => {})
 
