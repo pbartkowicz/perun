@@ -57,7 +57,7 @@ class CheckRun {
             conclusion: this.conclusion
         }
 
-        if (this.output.annotations.length !== 0) {
+        if (this.output.annotations.length) {
             body.output = this.output
         }
 
