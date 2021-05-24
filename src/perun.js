@@ -11,6 +11,7 @@ const { execFile } = require('./promise-exec')
 const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
 const { CheckRun } = require('./checks')
+const { accessSecretVersion } = require('./secret-gcloud')
 
 /**
  * Main Perun class
@@ -24,6 +25,9 @@ class Perun {
         this.foundProblems = []
 
         this.sensitiveDataSearcher = new SensitiveDataSearcher()
+
+        this.auth = null
+        this.privateKey = null
 
         this.octokitApp = null
         this.octokitInstallation = null
@@ -48,7 +52,10 @@ class Perun {
         this.log('yellow', 'Request data: ')
         this.logRaw(req)
 
-        if (!await verifySignature(req)) {
+        this.auth = JSON.parse(await accessSecretVersion(process.env.SECRETS_PATH))
+        this.privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
+
+        if (!await verifySignature(req, this.auth)) {
             res.status(403).send('Unauthorized')
             return
         }
@@ -58,8 +65,8 @@ class Perun {
         }
 
         try {
-            this.octokitApp = await newOctokitApp()
-            this.octokitInstallation = await newOctokitInstallation(req, this.octokitApp)
+            this.octokitApp = await newOctokitApp(this.auth, this.privateKey)
+            this.octokitInstallation = await newOctokitInstallation(req, this.octokitApp, this.auth, this.privateKey)
         } catch (e) {
             res.status(500).send(e.message)
             return

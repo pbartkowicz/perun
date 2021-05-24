@@ -19,13 +19,6 @@ jest.mock('crypto', () => {
         }
     }
 })
-jest.mock('../src/secret-gcloud', () => {
-    return {
-        accessSecretVersion () {
-            return new Promise(resolve => resolve('secret'))
-        }
-    }
-})
 
 // Test
 describe('authenticate', () => {
@@ -36,6 +29,8 @@ describe('authenticate', () => {
             headers: {
                 'x-hub-signature-256': 'sha256=digested-hmac'
             }
+        }, {
+            secret: 'secret'
         })
 
         expect(isValid).toBe(true)
@@ -48,6 +43,8 @@ describe('authenticate', () => {
             headers: {
                 'x-hub-signature-256': 'sha256=digested-hmac2'
             }
+        }, {
+            secret: 'secret'
         })
 
         expect(isValid).toBe(false)

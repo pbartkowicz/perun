@@ -8,17 +8,15 @@ const crypto = require('crypto')
 const { Octokit } = require('@octokit/core')
 const { createAppAuth } = require('@octokit/auth-app')
 
-const { accessSecretVersion } = require('./secret-gcloud')
-
 /**
  * Check if signature is valid
  *
  * @param   {Request} req Request
+ * @param   {Auth}    auth Auth
  * @returns {boolean} Is signature valid
  */
-const verifySignature = async (req) => {
-    const secret = await accessSecretVersion(process.env.SECRET_PATH)
-    const hmac = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body))
+const verifySignature = async (req, auth) => {
+    const hmac = crypto.createHmac('sha256', auth.secret).update(JSON.stringify(req.body))
 
     const expectedSignature = `sha256=${hmac.digest('hex')}`
     const signature = req.headers['x-hub-signature-256']
@@ -29,19 +27,18 @@ const verifySignature = async (req) => {
 /**
  * Create new Octokit application
  *
+ * @param   {Auth}   auth Auth
+ * @param   {string} privateKey
  * @returns {Octokit}
  */
-const newOctokitApp = async () => {
-    const secret = await accessSecretVersion(process.env.SECRET_PATH)
-    const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
-
+const newOctokitApp = async (auth, privateKey) => {
     return new Octokit({
         authStrategy: createAppAuth,
         auth: {
-            appId: process.env.APP_ID,
+            appId: auth.appId,
             privateKey: privateKey,
-            clientId: process.env.CLIENT_ID,
-            clientSecret: secret
+            clientId: auth.clientId,
+            clientSecret: auth.secret
         }
     })
 }
@@ -52,8 +49,7 @@ const newOctokitApp = async () => {
  * @param {Octokit} octokitApp
  * @returns {Octokit}
  */
-const newOctokitInstallation = async (req, octokitApp) => {
-    const privateKey = await accessSecretVersion(process.env.PRIVATE_KEY_PATH)
+const newOctokitInstallation = async (req, octokitApp, auth, privateKey) => {
     const res = await octokitApp.request('GET /repos/{owner}/{repo}/installation', {
         owner: req.body.repository.owner.login,
         repo: req.body.repository.name
@@ -66,7 +62,7 @@ const newOctokitInstallation = async (req, octokitApp) => {
     return new Octokit({
         authStrategy: createAppAuth,
         auth: {
-            appId: process.env.APP_ID,
+            appId: auth.appId,
             privateKey: privateKey,
             installationId: res.data.id
         }
