@@ -4,7 +4,6 @@ const path = require('path')
 const SqlInjectionSearcher = require('../../src/sql-injection-searcher')
 
 describe('SqlInjectionSearcher', () => {
-
     /**
      * @var {SqlInjectionSearcher}
      */
