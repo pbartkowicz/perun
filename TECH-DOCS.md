@@ -26,5 +26,8 @@ It is in the separate file to enable mocking in the test.
 ### [src/sensitive-data-searcher.js](src/sensitive-data-searcher.js)
 Class responsible for searching potential sensitive data in the single file.
 
+### [src/sql-injection-searcher.js](src/sql-injection-searcher.js)
+Class responsible for searching potential sql injection vulnerabilities in the single file
+
 ### [src/sensitive-keyword.js](src/sensitive-keyword.js)
 List of keywords for which the search for sensitive data will be performed.

@@ -27,6 +27,7 @@ describe('SqlInjectionSearcher', () => {
 
     it('should correctly set sql injection vulnerabilities regexes', () => {
         expect(searcher.regexes.length).toBeGreaterThan(0)
+        expect(searcher.regexes).toMatchSnapshot()
     })
 
     describe('search', () => {
