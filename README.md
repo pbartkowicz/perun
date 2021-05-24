@@ -48,7 +48,7 @@ Perun utilizes [Jest](https://jestjs.io/) as the test runner of choice. To run t
 yarn test
 ```
 
-If you want' to collect code coverage, simply run
+If you want to collect code coverage, simply run
 ```sh
 yarn test:coverage
 ```
