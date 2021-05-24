@@ -109,8 +109,7 @@ class Perun {
      * @return {boolean}
      */
     verifyAction (req) {
-        console.log(req.body.action)
-        return ['edited', 'opened', 'reopened'].includes(req.body.action)
+        return ['edited', 'opened', 'reopened', 'synchronize'].includes(req.body.action)
     }
 
     /**
