@@ -45,7 +45,13 @@ jest.mock('uuid', () => {
 jest.mock('../src/authenticate')
 jest.mock('../src/checks')
 jest.mock('../src/promise-exec')
-jest.mock('../src/secret-gcloud')
+jest.mock('../src/secret-gcloud', () => {
+    return {
+        accessSecretVersion () {
+            return new Promise(resolve => resolve('{}'))
+        }
+    }
+})
 jest.mock('../src/sensitive-data-searcher')
 
 // Tests
