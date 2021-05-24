@@ -1,0 +1,98 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SqlInjectionSearcher search it should find problems in file invalid_1.cpp 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_1.cpp",
+      "line": Object {
+        "contents": "SACommand select(&con, _TSA(\\"SELECT NAME, AGE FROM EMPLOYEES WHERE AGE > \\" + age));",
+        "number": 2,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SqlInjectionSearcher search it should find problems in file invalid_2.java 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_2.java",
+      "line": Object {
+        "contents": "+ \\"WHERE username = \\" + username)",
+        "number": 19,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+    Object {
+      "file": "invalid_2.java",
+      "line": Object {
+        "contents": "+ \\"WHERE user_other_field=\\"+user_other_field)",
+        "number": 24,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SqlInjectionSearcher search it should find problems in file invalid_2.php 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_2.php",
+      "line": Object {
+        "contents": "$results = DB::select( DB::raw(\\"SELECT * FROM some_table WHERE some_col = '$someVariable'\\") );",
+        "number": 3,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+    Object {
+      "file": "invalid_2.php",
+      "line": Object {
+        "contents": "$results = DB::select( DB::raw(\\"SELECT * FROM some_table WHERE some_other_col = $some_other_variable\\") );",
+        "number": 7,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SqlInjectionSearcher search it should find problems in file invalid_2.sql 1`] = `
+Object {
+  "problems": Array [
+    Object {
+      "file": "invalid_2.sql",
+      "line": Object {
+        "contents": "SELECT * FROM USERS WHERE ID = 15 OR 1=1;",
+        "number": 1,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+    Object {
+      "file": "invalid_2.sql",
+      "line": Object {
+        "contents": "SELECT * FROM PRODUCT WHERE ID = 15 UNION SELECT username;",
+        "number": 2,
+      },
+      "type": "Potential sql injection vulnerability",
+    },
+  ],
+  "valid": false,
+}
+`;
+
+exports[`SqlInjectionSearcher should correctly set sql injection vulnerabilities regexes 1`] = `
+Array [
+  /OR 1=1/,
+  /UNION SELECT username/,
+  /WHERE \\[a-zA-Z0-9_\\]\\+ \\?\\[=><\\] \\?" \\?\\[\\+\\.\\] \\?\\\\\\$\\?\\[a-zA-Z0-9_\\]\\+/,
+  /WHERE \\[a-zA-Z0-9_\\]\\+ \\?\\[=><\\] \\?'\\?\\\\\\$\\[a-zA-Z0-9_\\]\\+'\\?/,
+]
+`;

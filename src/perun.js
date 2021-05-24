@@ -12,6 +12,8 @@ const SensitiveDataSearcher = require('./sensitive-data-searcher')
 const { verifySignature, newOctokitApp, newOctokitInstallation } = require('./authenticate')
 const { CheckRun } = require('./checks')
 const { accessSecretVersion } = require('./secret-gcloud')
+const SqlInjectionSearcher = require('./sql-injection-searcher')
+
 
 /**
  * Main Perun class
@@ -25,6 +27,7 @@ class Perun {
         this.foundProblems = []
 
         this.sensitiveDataSearcher = new SensitiveDataSearcher()
+        this.sqlInjectionSearcher = new SqlInjectionSearcher()
 
         this.auth = null
         this.privateKey = null
@@ -181,7 +184,10 @@ class Perun {
      * @param {string} contents
      */
     lookForSqlInjection (file, contents) {
-        // TODO: Look for sql injection only in specific filetypes
+        const result = this.sqlInjectionSearcher.search(file, contents)
+        if (!result.valid) {
+            this.foundProblems = this.foundProblems.concat(result.problems)
+        }
     }
 
     /**
