@@ -31,3 +31,11 @@ Class responsible for searching potential sql injection vulnerabilities in the s
 
 ### [src/sensitive-keyword.js](src/sensitive-keyword.js)
 List of keywords for which the search for sensitive data will be performed.
+
+### [terraform/main.tf](terraform/main.tf)
+
+Terraform manifest which defines infrastructure.
+
+### [terraform/backend.tf](terraform/backend.tf)
+
+Terraform manifest which defines location of terraform's remote state.

@@ -1,5 +1,7 @@
 # Perun
 
+Perun performs security scans on pull requests. It's main purpose is to find hardcoded Sensitive Data and SQL injection in code. Perun is written as a GitHub application, which backend is located on Google Cloud Platform. Issues found in code are reported as GitHub checks.
+
 ## Development
 
 ### Platform requirements
@@ -8,6 +10,7 @@
 
 > **CAUTION!** Perun does not support Yarn 2 at the moment. Please use classic Yarn 1
 
+### [Technical Documentation](TECH-DOCS.md)
 ### Installing dependencies
 
 #### Frozen installation
@@ -58,13 +61,19 @@ yarn test:coverage
 - [Python](https://www.python.org/) 3.5 <= version <= 3.8
 - [GCloud](https://cloud.google.com/sdk/docs/install)
 
+### [Infrastructure setup](SETUP.md)
+
+> **CAUTION!** Parameters specified in Terraform manifests are specific for one Google Cloud project. Infrastructure setup provides a guide for creating needed resources.
+
+### Deployment commands
+
 Enable authorization to the Google Cloud Platform from your local machine and initialize Terraform. This action should be performed only once.
 
 ```sh
 make init
 ```
 
-**Warning:** Do not override Terraform state in the Google Cloud Platform (remote state), override local state instead.
+> **CAUTION!** Do not override Terraform state in the Google Cloud Platform (remote state), override local state instead.
 
 Deploy infrastructure to the Google Cloud Platform. This command creates or updates the infrastructure.
 
