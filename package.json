@@ -10,6 +10,7 @@
     "lint:app": "eslint src/**/*.js",
     "lint:test": "eslint test/**/*.js",
     "test": "jest",
+    "test:coverage": "jest --collect-coverage",
     "test:run": "node test/test-run.js"
   },
   "dependencies": {
