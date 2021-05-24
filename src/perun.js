@@ -46,7 +46,7 @@ class Perun {
             'sql-injection',
             'SQL Injection Check',
             'Found potential sql injection',
-            'todo', // TODO: Change it to the type of problem for sql injection
+            'Potential sql injection vulnerability',
             'Please make sure to prevent SQL Injection'
         )
     }
@@ -109,6 +109,7 @@ class Perun {
      * @return {boolean}
      */
     verifyAction (req) {
+        console.log(req.body.action)
         return ['edited', 'opened', 'reopened'].includes(req.body.action)
     }
 
