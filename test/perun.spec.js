@@ -1,5 +1,4 @@
 const chalk = require('chalk')
-const childProcess = require('child_process')
 const fs = require('fs')
 const rimraf = require('rimraf')
 
