@@ -1,5 +1,7 @@
 # Perun
 
+Perun performs security scans on pull requests. It's main purpose is to find hardcoded Sensitive Data and SQL injection in code. Perun is written as a GitHub application, which backend is located on Google Cloud Platform. Issues found in code are reported as GitHub checks.
+
 ## Development
 
 ### Platform requirements
